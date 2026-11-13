@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jadasi/mission-control/packages/contract/decision.schema.json",
+  "title": "DecisionRequest",
+  "description": "What an agent submits via request_decision. Mission Control adds id, status, timestamps, classification and audit fields on its side. Field limits on `glance` exist so cards fit the Even G2 576x288 display.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "provenance", "glance", "impact", "options", "recommended", "fingerprint", "ttl_seconds"],
+  "properties": {
+    "idempotency_key": {
+      "type": "string",
+      "maxLength": 128,
+      "description": "Agent-chosen key; resubmitting the same key returns the existing decision instead of creating a duplicate."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "ref"],
+      "properties": {
+        "system": { "type": "string", "enum": ["paperclip", "claude_code", "hermes", "email_triage", "github", "railway", "other"] },
+        "ref": { "type": "string", "description": "Source-native identifier, e.g. Paperclip issue/approval id, PR number, email thread id." },
+        "url": { "type": "string", "format": "uri" },
+        "project": { "type": "string", "description": "Work area, e.g. dental-web-jobs, hum, fam-central, plgrm." },
+        "agent": { "type": "string", "description": "Name of the requesting agent." }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["internal", "external"], "description": "external = triggered by input from outside David's systems (e.g. an inbound email)." },
+        "origin": { "type": "string", "description": "e.g. sender address for an inbound email." }
+      }
+    },
+    "glance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "question"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 48 },
+        "question": { "type": "string", "maxLength": 120 }
+      }
+    },
+    "impact": {
+      "type": "string",
+      "maxLength": 600,
+      "description": "Plain-language effect on people (end users, clients, David). Leads the detail view. No technical jargon."
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "outcome", "reversible", "writes"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_-]{1,32}$" },
+          "label": { "type": "string", "maxLength": 20 },
+          "outcome": { "type": "string", "maxLength": 240, "description": "What happens for people if chosen." },
+          "reversible": { "type": "boolean" },
+          "writes": { "type": "boolean", "description": "True if choosing this performs any external write (send, deploy, delete, spend, modify)." }
+        }
+      }
+    },
+    "recommended": { "type": "string", "description": "Option id the agent recommends." },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "default": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["option", "deadline"],
+      "description": "What the agent will do if unanswered. Deadline pauses outside open hours unless urgent.",
+      "properties": {
+        "option": { "type": "string" },
+        "deadline": { "type": "string", "format": "date-time" }
+      }
+    },
+    "urgency": { "type": "string", "enum": ["normal", "urgent"], "default": "normal" },
+    "allow_other": { "type": "boolean", "default": true },
+    "allow_call": { "type": "boolean", "default": true },
+    "fingerprint": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Opaque precondition token from the source (revision, branch SHA, thread last-message id, deploy id). Mission Control re-reads the source and compares before writing an answer."
+    },
+    "resources": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z_]+:.+$" },
+      "description": "Lock keys this decision would act on, e.g. env:dental-staging, email-thread:abc123, branch:repo/name."
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "label"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["link", "image", "preview", "diff_summary", "text"] },
+          "label": { "type": "string", "maxLength": 80 },
+          "url": { "type": "string", "format": "uri" },
+          "text": { "type": "string", "maxLength": 4000 }
+        }
+      }
+    },
+    "tried": { "type": "string", "maxLength": 1000, "description": "What the agent already tried or researched. Used to brief Call Me." },
+    "ttl_seconds": { "type": "integer", "minimum": 60, "maximum": 604800, "description": "Request expires unless the agent heartbeats." }
+  }
+}
