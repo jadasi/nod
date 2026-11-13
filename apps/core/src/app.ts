@@ -6,6 +6,7 @@ import type { Db } from './db.js';
 import { NodError } from './errors.js';
 import type { EventHub } from './events.js';
 import { callTool, handleMcp } from './mcp.js';
+import { serveWeb } from './web.js';
 import { HUMAN_SURFACES, type DecisionService, type Surface } from './service.js';
 
 export interface AppDeps {
@@ -185,6 +186,9 @@ export function createApp({ config, db, service, hub }: AppDeps): Hono<{ Variabl
     }),
   );
   app.route('/v1', dev);
+
+  // The web inbox. Registered last so it never shadows an API route.
+  serveWeb(app);
 
   return app;
 }

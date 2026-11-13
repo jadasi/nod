@@ -39,5 +39,5 @@
 
 ## 6. Web inbox
 
-- [ ] 6.1 Minimal PWA: inbox list, impact-first detail view, options, Other, undo countdown, "checked Ns ago", Stale & conflicts queue
-- [ ] 6.2 Served by `nod-core`, behind the device token
+- [x] 6.1 Minimal PWA: inbox list, impact-first detail view, options, Other, undo countdown, "checked Ns ago", Stale & conflicts queue
+- [x] 6.2 Served by `nod-core`, behind the device token

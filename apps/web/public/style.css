@@ -1,0 +1,291 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --line: #272c37;
+  --text: #e8eaf0;
+  --dim: #9aa3b5;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --blue: #7aa2ff;
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    16px/1.45 system-ui,
+    sans-serif;
+}
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 2;
+  flex-wrap: wrap;
+}
+h1 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--green);
+}
+nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+}
+nav button {
+  background: none;
+  border: 0;
+  color: var(--dim);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+nav button.active {
+  color: var(--text);
+  background: var(--panel);
+}
+.count:not(:empty) {
+  background: var(--green);
+  color: #000;
+  border-radius: 10px;
+  padding: 0 6px;
+  font-size: 12px;
+  margin-left: 2px;
+}
+.conn {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+}
+.conn.live {
+  background: var(--green);
+}
+.mode {
+  background: #3a2f10;
+  color: var(--amber);
+  padding: 6px 14px;
+  font-size: 13px;
+}
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 14px;
+}
+.empty {
+  color: var(--dim);
+  text-align: center;
+  margin: 48px 0;
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card.link {
+  cursor: pointer;
+}
+.card.link:hover {
+  border-color: #3a4152;
+}
+.card.urgent {
+  border-color: var(--red);
+}
+.card h2 {
+  margin: 0 0 2px;
+  font-size: 17px;
+}
+.question {
+  color: var(--dim);
+  margin: 0;
+}
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.tag {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #222733;
+  color: var(--dim);
+}
+.tag.urgent {
+  background: #4a1d1d;
+  color: var(--red);
+}
+.tag.external,
+.tag.write {
+  background: #3a2f10;
+  color: var(--amber);
+}
+.tag.sending {
+  background: #10304a;
+  color: var(--blue);
+}
+button.btn {
+  font: inherit;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #222733;
+  color: var(--text);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+button.btn:hover {
+  border-color: #3a4152;
+}
+button.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+button.primary {
+  background: var(--green);
+  color: #000;
+  border-color: var(--green);
+}
+button.small {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+.option {
+  display: block;
+  margin-bottom: 8px;
+}
+.option .label {
+  font-weight: 600;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.option .outcome {
+  font-size: 14px;
+  opacity: 0.85;
+  font-weight: 400;
+  margin-top: 2px;
+}
+.rec {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.primary .rec {
+  color: #000;
+}
+.impact {
+  font-size: 18px;
+  margin: 12px 0 16px;
+}
+.banner {
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  background: #10304a;
+  color: var(--blue);
+}
+.banner.done {
+  background: #123524;
+  color: var(--green);
+}
+.banner.stale,
+.banner.failed {
+  background: #4a1d1d;
+  color: var(--red);
+}
+.banner.held {
+  background: #3a2f10;
+  color: var(--amber);
+}
+.meta {
+  color: var(--dim);
+  font-size: 13px;
+  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.meta.stale {
+  color: var(--amber);
+}
+.back {
+  background: none;
+  border: 0;
+  color: var(--blue);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 10px;
+}
+details {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+summary {
+  color: var(--dim);
+  cursor: pointer;
+}
+details a {
+  color: var(--blue);
+}
+pre {
+  white-space: pre-wrap;
+  background: #0b0d11;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+textarea,
+input[type='password'],
+input[type='text'] {
+  width: 100%;
+  font: inherit;
+  background: #0b0d11;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.err {
+  color: var(--red);
+  margin: 8px 0;
+}
+.update {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.update small {
+  color: var(--dim);
+}
