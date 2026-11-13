@@ -13,7 +13,6 @@ Hono service on Node 22: REST + SSE + MCP, Postgres decision store with an appen
 | `NOD_UNDO_WINDOW_SECONDS`                                | no       | Default 120.                                                                                                            |
 | `NOD_MAX_DELIVERY_ATTEMPTS`, `NOD_RETRY_BACKOFF_SECONDS` | no       | Defaults 3 and 30.                                                                                                      |
 | `NOD_RECONCILER_INTERVAL_SECONDS`                        | no       | Default 300.                                                                                                            |
-| `ANTHROPIC_API_KEY`                                      | not yet  | Reserved for the classifier (policy phase). Not read by this service.                                                   |
 
 ## API
 

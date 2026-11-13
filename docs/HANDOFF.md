@@ -37,9 +37,9 @@ Success metric: **time tasks spend waiting on David**, and **decisions per day r
 | Call or card | The classifier decides per request. Fits a quick choice → card. Can't be summarized into a quick choice → Nod **calls David** (open hours only). No pickup → falls back to a card. |
 | Updates tab | Scheduled sweep of all work areas every 2 hours (8am–8pm) plus an end-of-day digest. Shown as an **Updates** tab in the app and on glasses. |
 | New tasks | OpenSpec change proposal only when the target project's `AGENTS.md` asks for it. Otherwise a plain Paperclip task brief. |
-| Classification | **Haiku-class model with structured output** (urgency, risk, call-or-card, duplicate-of, project) and it writes glance/impact text. Behind one `Classifier` interface. TypeSafe's Jev was evaluated and is not needed at this volume. |
+| Classification | Structured-output classifier (urgency, risk, call-or-card, duplicate-of, project) that also writes glance/impact text, behind one provider-agnostic `Classifier` interface. **No Anthropic API key**: the implementation talks Agent Client Protocol (ACP) to a headless harness on David's VPS (Claude Code signed in with his subscription; OpenCode is the swap-in). Output is JSON-schema validated with retry. TypeSafe's Jev was evaluated and is not needed at this volume. |
 | Telegram stopgap | Dropped. |
-| Voice | **OpenAI GPT-Live-1** (full duplex, $0.05/min voice layer) with **Claude as the delegated backend** for reasoning and tools. Transport: **LiveKit Agents** over in-app WebRTC. Budget target < $50/mo; hard monthly cap enforced in core. |
+| Voice | **OpenAI GPT-Live-1** (full duplex, $0.05/min voice layer) with **Claude as the delegated backend** for reasoning and tools, run through the same ACP-driven harness on the VPS (no API key). Transport: **LiveKit Agents** over in-app WebRTC. Budget target < $50/mo; hard monthly cap enforced in core. |
 
 ## 3. Architecture
 
