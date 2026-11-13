@@ -21,7 +21,7 @@ The outcome writer SHALL re-read the source's current fingerprint when David ans
 The system SHALL track the `resources` of open decisions, and a new request that names a resource already held by an open decision SHALL be queued behind it or merged into it, never shown as an independent competing card.
 
 #### Scenario: Two agents want the same staging environment
-- **WHEN** agent B requests a decision on `env:dental-staging` while agent A's decision on it is open
+- **WHEN** agent B requests a decision on `env:staging` while agent A's decision on it is open
 - **THEN** B's request is queued, shown as "waiting on" A's card, and surfaces only after A's decision closes
 
 ### Requirement: Reconciliation

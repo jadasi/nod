@@ -84,7 +84,7 @@ See `packages/contract/decision.schema.json` for the authoritative schema. Key f
 - `urgency`: `normal` | `urgent`; `risk`: `low` | `write` (computed: any option with `writes: true` is `write`)
 - `allow_other` (free text), `allow_call`
 - `fingerprint`: opaque precondition token from the source (revision, SHA, thread last-message id, deploy id)
-- `resources[]`: lock keys this decision would act on (e.g. `env:dental-staging`, `email-thread:<id>`)
+- `resources[]`: lock keys this decision would act on (e.g. `env:staging`, `email-thread:<id>`)
 - `evidence[]`: links, images, previews (collapsed, technical)
 - `ttl_seconds` + agent heartbeat
 

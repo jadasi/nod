@@ -16,7 +16,7 @@ export interface DecisionRequest {
     ref: string;
     url?: string;
     /**
-     * Work area, e.g. dental-web-jobs, hum, fam-central, plgrm.
+     * Work area, e.g. web-app, docs-site, billing.
      */
     project?: string;
     /**
@@ -190,7 +190,7 @@ export interface DecisionRequest {
    */
   fingerprint: string;
   /**
-   * Lock keys this decision would act on, e.g. env:dental-staging, email-thread:abc123, branch:repo/name.
+   * Lock keys this decision would act on, e.g. env:staging, email-thread:abc123, branch:repo/name.
    */
   resources?: string[];
   evidence?: {
