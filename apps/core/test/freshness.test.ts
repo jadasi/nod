@@ -99,8 +99,8 @@ describe('source-freshness: revalidate before delivery', () => {
 
 describe('source-freshness: resource locks', () => {
   it('queues a second request on the same resource and surfaces it after the first closes', async () => {
-    const a = await open({ resources: ['env:dental-staging'] });
-    const b = await open({ resources: ['env:dental-staging'] });
+    const a = await open({ resources: ['env:staging'] });
+    const b = await open({ resources: ['env:staging'] });
     expect(a.status).toBe('open');
     expect(b.status).toBe('queued');
     const queued = await h.service.get(b.id);
