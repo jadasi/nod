@@ -1,4 +1,4 @@
-# @nod/adapter-paperclip
+# @david_osco/nod-paperclip-plugin
 
 A Paperclip plugin that sends board approvals to Nod and writes David's answers back.
 
@@ -38,6 +38,8 @@ Paperclip approvals have no `options[]`, and the board can only approve, reject 
 
 ## Install
 
+Published to npm as `@david_osco/nod-paperclip-plugin` (tag `paperclip-v<version>` runs the publish workflow). Install with `paperclipai plugin install @david_osco/nod-paperclip-plugin`, or from a local checkout with `paperclipai plugin install ./adapters/paperclip` after `pnpm build`.
+
 Build and publish (or install from a local path) into the Paperclip instance, then set the plugin's instance config:
 
 | Setting            | Value                                                                                              |
@@ -51,4 +53,4 @@ Core only writes to sources when `NOD_DELIVERY_MODE=live`; in `dry_run` answers 
 
 ## Tests
 
-`pnpm --filter @nod/adapter-paperclip test`. `loop.test.ts` runs the adapter against the real core service and needs Postgres (`NOD_TEST_DATABASE_URL`, same as core).
+`pnpm --filter @david_osco/nod-paperclip-plugin test`. `loop.test.ts` runs the adapter against the real core service and needs Postgres (`NOD_TEST_DATABASE_URL`, same as core).

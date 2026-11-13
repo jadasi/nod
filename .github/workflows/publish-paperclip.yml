@@ -1,0 +1,32 @@
+name: Publish Paperclip plugin
+# Publishes @david_osco/nod-paperclip-plugin to npm with trusted publishing (OIDC): no npm token is stored.
+# Release: bump "version" in adapters/paperclip/package.json, merge, then push a tag `paperclip-v<version>`.
+on:
+  push:
+    tags: ['paperclip-v*']
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm >= 11.5.1; Node 22 ships an older npm.
+      - run: npm install -g npm@^11.5.1
+      - run: pnpm install --frozen-lockfile
+      - name: Tag must match the package version
+        run: |
+          v="$(node -p "require('./adapters/paperclip/package.json').version")"
+          [ "$GITHUB_REF_NAME" = "paperclip-v$v" ] || { echo "tag $GITHUB_REF_NAME does not match version $v"; exit 1; }
+      - run: pnpm --filter @david_osco/nod-paperclip-plugin typecheck
+      - run: pnpm --filter @david_osco/nod-paperclip-plugin build
+      # pnpm pack rewrites workspace: dependencies; npm publish does the OIDC login and provenance.
+      - run: pnpm --filter @david_osco/nod-paperclip-plugin pack --pack-destination "$RUNNER_TEMP/pkg"
+      - run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --access public --provenance
