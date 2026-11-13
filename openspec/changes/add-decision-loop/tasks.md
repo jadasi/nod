@@ -3,7 +3,7 @@
 ## 1. Repo and CI foundation
 
 - [ ] 1.1 pnpm workspace, TypeScript strict, Node 22, ESLint, Prettier, Vitest
-- [x] 1.2 GitHub Actions PR workflow on the self-hosted runners: install, typecheck, lint, unit tests, integration tests against a Postgres service container, `openspec validate --strict`
+- [x] 1.2 GitHub Actions PR workflow on GitHub-hosted runners: install, typecheck, lint, unit tests, integration tests against a Postgres service container, `openspec validate --strict`
 - [ ] 1.3 Branch protection on `main`: PR required, CI must pass
 - [ ] 1.4 Railway: `nod-core` service and Postgres; auto-deploy from `main` with "wait for CI"; health check endpoint
 - [x] 1.5 `NOD_DELIVERY_MODE` variable (`live` | `dry_run`) as a kill switch: in `dry_run` the outcome writer logs instead of writing to sources

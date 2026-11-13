@@ -1,11 +1,10 @@
 # Nod — handoff
 
-_Formerly "Mission Control" in the design doc; renamed to Nod on 2026-11-13._
+_Formerly "Mission Control" during design; renamed to Nod on 2026-11-13._
 
 Everything decided in the design session on 2026-11-13, so a fresh session (human or agent) can build without the original chat.
 
-- **Living design doc (source of truth for intent):** https://claude.ai/artifact/SJWpCZbtp8LCQGz7anDFC1
-- **This file:** the condensed, build-ready version. If it conflicts with the doc, the doc's "Decisions from review" section wins. Update this file whenever that section changes.
+- **This file** is the source of truth for decisions. Update it whenever a decision changes.
 
 ## 1. What we're building
 
@@ -67,7 +66,7 @@ Agents never talk to a surface directly. Everything goes through core.
 | Claude Code adapter | Claude Code hooks (permission prompts, stop/notification) + Agent SDK tool-permission callback | For worktree agents outside Paperclip. |
 | Hermes adapter | Bridge from Hermes webhook / API server | Replaces Hermes' chat-bound `/approve`. Hermes stays the email-triage worker. |
 | Policy | Rules in Postgres, evaluated in-process; Haiku classifier | Log every decision for rule suggestions (after N identical picks). |
-| Android app | Expo + NativeWind + react-native-reusables + TanStack Query + Zustand | Same stack as HUM Operator. Actionable notifications (lock screen, Wear OS). |
+| Android app | Expo + NativeWind + react-native-reusables + TanStack Query + Zustand | Actionable notifications (lock screen, Wear OS). |
 | Glasses | Even Hub app, `@evenrealities/even_hub_sdk`, TypeScript/Vite | Runs inside the Even app on the phone; 576×288 monochrome green; R1 ring: swipe = move, tap = select, double tap = skip, long press = Call Me. G2 has mics, no speaker. Build against the simulator now. |
 | "Other" dictation | GPT-Realtime-Whisper ($0.017/min) or a G2 STT shim | |
 | Auth/audit | Device-bound token for the single user; scoped per-source tokens; append-only decision log | Nod can deploy to prod: treat as a prod credential. |
@@ -131,13 +130,13 @@ See `packages/contract/decision.schema.json` for the authoritative schema. Key f
 
 - **Spec-driven with OpenSpec**, used lightly. Behavior changes get a change proposal; fixes, refactors and tooling don't (`no-spec` label). Specs describe behavior and effect on people, never implementation, which keeps sync overhead low. Phase 1 is drafted as `openspec/changes/add-decision-loop`.
 - **Testing:** unit, integration against real Postgres, contract fixtures, and an end-to-end loop test with a fake source. Every spec scenario maps to a test.
-- **CI:** PR CI on the self-hosted runners is the only gate, with no staging. Merging to `main` deploys `nod-core` to Railway (after CI passes) and ships Android changes via EAS (Update for JS, local build for native). `NOD_DELIVERY_MODE=dry_run` is the kill switch; Railway rollback covers bad deploys; migrations follow expand/contract.
+- **CI:** PR CI on GitHub-hosted runners is the only gate, with no staging. Merging to `main` deploys `nod-core` to Railway (after CI passes) and ships Android changes via EAS (Update for JS, local build for native). `NOD_DELIVERY_MODE=dry_run` is the kill switch; Railway rollback covers bad deploys; migrations follow expand/contract.
 - Full rules: `AGENTS.md`.
 
 ## 10. Environment facts
 
-- Paperclip is self-hosted on Railway (project `paperclip-selfhosted`, pinned image `ghcr.io/paperclipai/paperclip:2026.916.1`, authenticated/public mode).
-- David's dev workflow: GitHub for everything; async agents in worktrees opening PRs; GitHub Actions on local self-hosted runners.
+- Paperclip is self-hosted, with an authenticated API.
+- David's dev workflow: GitHub for everything; async agents in worktrees opening PRs; GitHub Actions for CI.
 - Hermes Agent (Nous Research) is in use; it has an OpenAI-compatible API server and webhook support.
 
 See `docs/research.md` for the prior-art and pricing research behind these choices.

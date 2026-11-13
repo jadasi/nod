@@ -50,7 +50,7 @@ Specs in `openspec/specs/` are the record of what Nod does and why. Code follows
 Just David, so **no staging environment**. Pull-request CI is the gate, and `main` is production.
 
 - **Tests:** Vitest unit tests for every package; integration tests for `apps/core` against a real Postgres (CI service container); contract tests from schema fixtures; an end-to-end loop test using a fake source adapter (request → answer → undo → delivery → revalidation). The outcome writer and every policy rule need tests for each spec scenario.
-- **PR CI** (GitHub Actions on the self-hosted runners): install, typecheck, lint, tests, `openspec validate --strict`. For PRs touching `apps/android`, also build a preview APK with `eas build --local --profile preview` and attach it as an artifact, to avoid EAS cloud build minutes.
+- **PR CI** (GitHub Actions on GitHub-hosted runners): install, typecheck, lint, tests, `openspec validate --strict`. For PRs touching `apps/android`, also build a preview APK with `eas build --local --profile preview` and attach it as an artifact, to avoid EAS cloud build minutes.
 - **Merge to `main`:** Railway auto-deploys `nod-core` only after CI passes ("wait for CI"). Android: JavaScript-only changes ship as an EAS Update to the production channel; native changes produce a new local EAS build, which David installs.
 - **Branch protection:** PRs required on `main`, CI must pass. No direct pushes.
 - **Safety net in place of staging:** `NOD_DELIVERY_MODE=dry_run` (a Railway variable) makes the outcome writer log instead of writing to sources. Use it when testing against real sources, or as a kill switch. Railway's one-click rollback covers bad deploys.
