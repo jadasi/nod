@@ -52,3 +52,14 @@ The system SHALL surface a failed delivery to David instead of silently retrying
 #### Scenario: Source rejects the write
 - **WHEN** the source returns an error after the allowed retries
 - **THEN** the decision moves to the "Stale & conflicts" queue with the error in plain language
+
+### Requirement: Kill switch
+The system SHALL support a delivery mode in which answers are recorded and held but never sent to a source, and SHALL send the held answers only after the mode is switched back to live.
+
+#### Scenario: Testing against a real source
+- **WHEN** delivery is switched to dry run and an undo window ends
+- **THEN** nothing is sent, the audit trail records that the send was skipped, and the decision stays answered
+
+#### Scenario: Back to live
+- **WHEN** delivery is switched back to live
+- **THEN** held answers are checked against their sources again and sent if still fresh
