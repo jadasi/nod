@@ -1,0 +1,28 @@
+{
+  "name": "@nod/adapter-paperclip",
+  "version": "0.1.0",
+  "description": "Paperclip plugin: turns board approvals into Nod decisions and writes David's answers back.",
+  "private": true,
+  "type": "module",
+  "main": "dist/worker.js",
+  "scripts": {
+    "build": "pnpm --filter @nod/contract build && tsc -p tsconfig.build.json",
+    "typecheck": "pnpm --filter @nod/contract build && tsc --noEmit",
+    "test": "pnpm --filter @nod/contract build && vitest run"
+  },
+  "dependencies": {
+    "@paperclipai/plugin-sdk": "2026.824.1"
+  },
+  "devDependencies": {
+    "@nod/contract": "workspace:*",
+    "@paperclipai/shared": "2026.824.1",
+    "@types/node": "^22.20.5"
+  },
+  "paperclipPlugin": {
+    "manifest": "./dist/manifest.js",
+    "worker": "./dist/worker.js"
+  },
+  "files": [
+    "dist"
+  ]
+}

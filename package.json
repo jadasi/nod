@@ -11,7 +11,7 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --check .",
-    "test": "pnpm -r test",
+    "test": "pnpm -r --workspace-concurrency=1 test",
     "spec:validate": "openspec validate --strict"
   },
   "devDependencies": {
