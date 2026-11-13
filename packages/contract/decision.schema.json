@@ -20,7 +20,7 @@
         "system": { "type": "string", "enum": ["paperclip", "claude_code", "hermes", "email_triage", "github", "railway", "other"] },
         "ref": { "type": "string", "description": "Source-native identifier, e.g. Paperclip issue/approval id, PR number, email thread id." },
         "url": { "type": "string", "format": "uri" },
-        "project": { "type": "string", "description": "Work area, e.g. dental-web-jobs, hum, fam-central, plgrm." },
+        "project": { "type": "string", "description": "Work area, e.g. web-app, docs-site, billing." },
         "agent": { "type": "string", "description": "Name of the requesting agent." }
       }
     },
@@ -87,7 +87,7 @@
     "resources": {
       "type": "array",
       "items": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*:.+$" },
-      "description": "Lock keys this decision would act on, e.g. env:dental-staging, email-thread:abc123, branch:repo/name."
+      "description": "Lock keys this decision would act on, e.g. env:staging, email-thread:abc123, branch:repo/name."
     },
     "evidence": {
       "type": "array",
