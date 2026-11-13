@@ -7,7 +7,10 @@ export type { DecisionRequest } from './generated/decision.js';
 
 const schema = JSON.parse(
   readFileSync(new URL('../decision.schema.json', import.meta.url), 'utf8'),
-) as object;
+) as Record<string, unknown>;
+
+/** The JSON Schema itself, e.g. to publish as an MCP tool's input schema. */
+export const decisionSchema: Readonly<Record<string, unknown>> = schema;
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats.default(ajv);

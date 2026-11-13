@@ -3,10 +3,10 @@
 ## 1. Repo and CI foundation
 
 - [ ] 1.1 pnpm workspace, TypeScript strict, Node 22, ESLint, Prettier, Vitest
-- [ ] 1.2 GitHub Actions PR workflow on the self-hosted runners: install, typecheck, lint, unit tests, integration tests against a Postgres service container, `openspec validate --strict`
+- [x] 1.2 GitHub Actions PR workflow on the self-hosted runners: install, typecheck, lint, unit tests, integration tests against a Postgres service container, `openspec validate --strict`
 - [ ] 1.3 Branch protection on `main`: PR required, CI must pass
 - [ ] 1.4 Railway: `nod-core` service and Postgres; auto-deploy from `main` with "wait for CI"; health check endpoint
-- [ ] 1.5 `NOD_DELIVERY_MODE` variable (`live` | `dry_run`) as a kill switch: in `dry_run` the outcome writer logs instead of writing to sources
+- [x] 1.5 `NOD_DELIVERY_MODE` variable (`live` | `dry_run`) as a kill switch: in `dry_run` the outcome writer logs instead of writing to sources
 
 ## 2. Contract
 
@@ -16,20 +16,20 @@
 
 ## 3. Core: intake
 
-- [ ] 3.1 Postgres schema: decisions, answers, audit_log (append-only), resource_locks; migrations
-- [ ] 3.2 REST endpoints and MCP server: `request_decision`, `await_decision`, `notify`, `report_progress`, heartbeat, withdraw
-- [ ] 3.3 Idempotent submission, TTL expiry job
-- [ ] 3.4 LISTEN/NOTIFY → SSE stream for clients
-- [ ] 3.5 Single-user auth: device-bound token for clients; scoped per-source tokens for agents
+- [x] 3.1 Postgres schema: decisions, answers, audit_log (append-only), resource_locks; migrations
+- [x] 3.2 REST endpoints and MCP server: `request_decision`, `await_decision`, `notify`, `report_progress`, heartbeat, withdraw
+- [x] 3.3 Idempotent submission, TTL expiry job
+- [x] 3.4 LISTEN/NOTIFY → SSE stream for clients
+- [x] 3.5 Single-user auth: device-bound token for clients; scoped per-source tokens for agents
 
 ## 4. Core: outcome delivery and freshness
 
-- [ ] 4.1 Outcome writer with undo window, idempotency keys, retry limits
-- [ ] 4.2 Write-approval guard (external provenance never auto-writes)
-- [ ] 4.3 Revalidation at answer time and send time via a `SourceAdapter.fingerprint()` interface
-- [ ] 4.4 Resource lock queueing/merging
-- [ ] 4.5 Reconciler (5-minute sweep) and "Stale & conflicts" queue
-- [ ] 4.6 A fake source adapter for tests, and an end-to-end test: request → answer → undo → answer → window elapses → fingerprint check → delivery
+- [x] 4.1 Outcome writer with undo window, idempotency keys, retry limits
+- [x] 4.2 Write-approval guard (external provenance never auto-writes)
+- [x] 4.3 Revalidation at answer time and send time via a `SourceAdapter.fingerprint()` interface
+- [x] 4.4 Resource lock queueing/merging
+- [x] 4.5 Reconciler (5-minute sweep) and "Stale & conflicts" queue
+- [x] 4.6 A fake source adapter for tests, and an end-to-end test: request → answer → undo → answer → window elapses → fingerprint check → delivery
 
 ## 5. Paperclip adapter
 

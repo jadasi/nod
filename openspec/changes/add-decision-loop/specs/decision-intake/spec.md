@@ -59,3 +59,28 @@ The system SHALL let the requesting agent withdraw its own open decision, and SH
 #### Scenario: Answer delivered
 - **WHEN** the outcome writer delivers an answer
 - **THEN** `await_decision` returns the chosen option (or free text), the delivered-at time, and the fingerprint
+
+### Requirement: Scoped access
+The system SHALL let each agent act only for the one source its token was issued for, and SHALL accept David's answers only from his own device token. Neither kind of token SHALL work in place of the other.
+
+#### Scenario: Agent claims another source
+- **WHEN** an agent with a Paperclip token submits a request whose source is Hermes
+- **THEN** the system rejects it and stores nothing
+
+#### Scenario: Agent tries to answer
+- **WHEN** an agent token is used to answer a decision
+- **THEN** the system refuses, because only David's device may answer
+
+### Requirement: Live updates to clients
+The system SHALL push every change to a decision to connected clients without them asking, so cards appear, change and disappear as it happens.
+
+#### Scenario: New card appears
+- **WHEN** an agent submits a valid request
+- **THEN** every connected client is told about the new decision within a few seconds
+
+### Requirement: Updates feed
+The system SHALL accept `notify` and `report_progress` messages that need no answer and keep them for David's Updates view.
+
+#### Scenario: Progress report
+- **WHEN** an agent reports progress
+- **THEN** it appears in the Updates feed and no decision is created
