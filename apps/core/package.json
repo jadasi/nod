@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "build": "pnpm --filter @nod/contract build && tsc -p tsconfig.build.json",
     "typecheck": "pnpm --filter @nod/contract build && tsc --noEmit",
-    "test": "pnpm --filter @nod/contract build && vitest run"
+    "test": "pnpm --filter @nod/contract build && vitest run",
+    "fake-source": "tsx scripts/fake-source.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.8",

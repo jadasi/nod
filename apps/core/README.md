@@ -25,3 +25,17 @@ David's devices (`Authorization: Bearer <device token>`): `GET /v1/decisions?vie
 ## Tests
 
 Integration tests need a real Postgres: `NOD_TEST_DATABASE_URL` (default `postgres://postgres:postgres@localhost:5432/nod_test`). They drop and recreate the `public` schema of that database.
+
+## Web inbox
+
+`nod-core` serves the bare web inbox (`apps/web/public`, plain static files, no build step) at `/`. The files hold no data; decisions come from `/v1/*`, which needs the device token. Open the service URL, enter `NOD_DEVICE_TOKEN` once (it is kept in that browser's local storage), and use "Add to Home screen" to install it as a PWA. See `apps/web/README.md`.
+
+## Fake source
+
+`pnpm --filter @nod/core fake-source` plays an agent: it files a decision, then long-polls for the answer and prints it. Use it to prove the loop (request → answer in the web inbox → undo window → delivery → agent receives the answer).
+
+```
+NOD_URL=http://localhost:8080 NOD_AGENT_TOKEN=<token> pnpm --filter @nod/core fake-source --count 2 [--urgent] [--external] [--no-wait]
+```
+
+Decisions are filed under the contract's `other` system, so the token must be configured as `other=<token>` in `NOD_AGENT_TOKENS`. In `dry_run` delivery mode the answer is held, so the script keeps waiting; switch to `live` (passive source, nothing is written anywhere) to see it complete.

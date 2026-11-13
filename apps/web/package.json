@@ -1,0 +1,11 @@
+{
+  "name": "@nod/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Bare web inbox (PWA). Plain static files served by @nod/core; no build step.",
+  "scripts": {
+    "typecheck": "echo 'no typecheck: plain JS'",
+    "test": "vitest run"
+  }
+}

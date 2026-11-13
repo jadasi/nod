@@ -14,4 +14,30 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    // Plain browser JS, no build step.
+    files: ['apps/web/public/**/*.js'],
+    languageOptions: {
+      globals: Object.fromEntries(
+        [
+          'document',
+          'window',
+          'fetch',
+          'localStorage',
+          'navigator',
+          'setInterval',
+          'setTimeout',
+          'clearTimeout',
+          'Date',
+          'URL',
+          'AbortController',
+          'TextDecoderStream',
+          'Node',
+          'self',
+          'caches',
+          'location',
+        ].map((g) => [g, 'readonly']),
+      ),
+    },
+  },
 );
