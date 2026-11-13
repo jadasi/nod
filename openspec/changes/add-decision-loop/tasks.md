@@ -33,8 +33,8 @@
 
 ## 5. Paperclip adapter
 
-- [ ] 5.1 Resolve open questions: can approval payloads carry `options[]`; how agents signal "blocked on human"; can plugins push events or must we poll/SSE
-- [ ] 5.2 Paperclip plugin: blocked work and approvals → `request_decision`; answers → REST write-back; fingerprint = approval/issue revision
+- [x] 5.1 Resolve open questions: can approval payloads carry `options[]`; how agents signal "blocked on human"; can plugins push events or must we poll/SSE
+- [x] 5.2 Paperclip plugin: blocked work and approvals → `request_decision`; answers → REST write-back; fingerprint = approval/issue revision
 - [ ] 5.3 Install on the self-hosted Paperclip instance and verify with one real approval
 
 ## 6. Web inbox
