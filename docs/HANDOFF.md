@@ -127,7 +127,14 @@ See `packages/contract/decision.schema.json` for the authoritative schema. Key f
 - How do Paperclip agents signal "blocked on human" — approval vs blocked issue? Pick one convention.
 - Even Hub SDK: mic/STT access and any network restrictions for calling our API.
 
-## 9. Environment facts
+## 9. Development process
+
+- **Spec-driven with OpenSpec**, used lightly. Behavior changes get a change proposal; fixes, refactors and tooling don't (`no-spec` label). Specs describe behavior and effect on people, never implementation, which keeps sync overhead low. Phase 1 is drafted as `openspec/changes/add-decision-loop`.
+- **Testing:** unit, integration against real Postgres, contract fixtures, and an end-to-end loop test with a fake source. Every spec scenario maps to a test.
+- **CI:** PR CI on the self-hosted runners is the only gate, with no staging. Merging to `main` deploys `nod-core` to Railway (after CI passes) and ships Android changes via EAS (Update for JS, local build for native). `NOD_DELIVERY_MODE=dry_run` is the kill switch; Railway rollback covers bad deploys; migrations follow expand/contract.
+- Full rules: `AGENTS.md`.
+
+## 10. Environment facts
 
 - Paperclip is self-hosted on Railway (project `paperclip-selfhosted`, pinned image `ghcr.io/paperclipai/paperclip:2026.916.1`, authenticated/public mode).
 - David's dev workflow: GitHub for everything; async agents in worktrees opening PRs; GitHub Actions on local self-hosted runners.

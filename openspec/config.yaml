@@ -1,0 +1,31 @@
+schema: spec-driven
+
+context: |
+  Nod is a single-user tool for David. No multi-user, roles, iOS, Supabase or Telegram.
+  Hosting is Railway only (Railway Postgres). The app is Android only (Expo).
+  Product decisions live in docs/HANDOFF.md; specs must not contradict it.
+  Specs describe behavior and its effect on people, not implementation.
+  Safety invariants that every change must preserve: 2-minute undo window before any
+  write to a source; fingerprint revalidation before delivery; idempotent delivery;
+  writes from external provenance are never auto-approved.
+  Open hours are 8am-8pm America/Phoenix.
+
+rules:
+  proposal:
+    - Keep proposals under 400 words
+    - Always state what is out of scope
+  specs:
+    - Every requirement has at least one scenario, written so it maps directly to a test
+    - Spec behavior and outcomes, never library or file choices
+  tasks:
+    - Include the tests that prove each scenario
+    - Keep each task small enough for one pull request
+
+operations:
+  apply:
+    guidance:
+      - Write the scenario tests first, then the implementation
+      - Tick tasks in tasks.md in the same PR that completes them
+  archive:
+    guidance:
+      - Archive in the PR that finishes the last task, so specs and code merge together

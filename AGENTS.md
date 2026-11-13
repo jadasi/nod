@@ -34,6 +34,28 @@ adapters/claude-code Claude Code hooks
 - Tests: Vitest for TS packages. Every policy rule and the outcome writer's revalidation path need tests.
 - Small PRs, one concern each, with a short description of user-visible effect.
 
+## Spec-driven development (OpenSpec)
+
+Specs in `openspec/specs/` are the record of what Nod does and why. Code follows specs.
+
+- **Needs a change proposal** (`/openspec-propose`): new behavior, or a change to existing behavior that David would notice. That includes policy rules, safety invariants, the contract, and anything user-facing.
+- **Doesn't**: bug fixes that restore specced behavior, refactors, dependency bumps, tooling, docs. Add the `no-spec` label to the PR.
+- Specs describe **behavior and its effect on people**, not implementation. Never put library names, file paths or function names in a spec, so refactors can't make it stale.
+- Every scenario maps to a test. Write the scenario's test first.
+- Archive the change (`openspec archive`) in the PR that finishes its last task, so specs and code land together.
+- CI runs `openspec validate --strict`. A PR that changes behavior without a change or the `no-spec` label fails review.
+
+## Testing and CI
+
+Just David, so **no staging environment**. Pull-request CI is the gate, and `main` is production.
+
+- **Tests:** Vitest unit tests for every package; integration tests for `apps/core` against a real Postgres (CI service container); contract tests from schema fixtures; an end-to-end loop test using a fake source adapter (request → answer → undo → delivery → revalidation). The outcome writer and every policy rule need tests for each spec scenario.
+- **PR CI** (GitHub Actions on the self-hosted runners): install, typecheck, lint, tests, `openspec validate --strict`. For PRs touching `apps/android`, also build a preview APK with `eas build --local --profile preview` and attach it as an artifact, to avoid EAS cloud build minutes.
+- **Merge to `main`:** Railway auto-deploys `nod-core` only after CI passes ("wait for CI"). Android: JavaScript-only changes ship as an EAS Update to the production channel; native changes produce a new local EAS build, which David installs.
+- **Branch protection:** PRs required on `main`, CI must pass. No direct pushes.
+- **Safety net in place of staging:** `NOD_DELIVERY_MODE=dry_run` (a Railway variable) makes the outcome writer log instead of writing to sources. Use it when testing against real sources, or as a kill switch. Railway's one-click rollback covers bad deploys.
+- **Migrations** must be backward compatible with the previous deploy (expand, then contract), because there's no staging to catch a breaking one.
+
 ## Out of scope unless asked
 
 Multi-user, roles, iOS, Telegram, Supabase, Jev (keep the `Classifier` interface swappable instead).
