@@ -1,0 +1,9 @@
+dist
+node_modules
+pnpm-lock.yaml
+packages/contract/src/generated
+openspec
+.agents
+.claude
+docs
+packages/contract/decision.schema.json

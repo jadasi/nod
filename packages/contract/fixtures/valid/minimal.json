@@ -1,0 +1,28 @@
+{
+  "source": { "system": "paperclip", "ref": "approval-1" },
+  "provenance": { "kind": "internal" },
+  "glance": {
+    "title": "Ship dental job board?",
+    "question": "Publish the new job board to all clinics?"
+  },
+  "impact": "Clinics will see the new board tomorrow morning.",
+  "options": [
+    {
+      "id": "ship",
+      "label": "Ship now",
+      "outcome": "Clinics see it today.",
+      "reversible": true,
+      "writes": true
+    },
+    {
+      "id": "wait",
+      "label": "Wait",
+      "outcome": "Nothing changes.",
+      "reversible": true,
+      "writes": false
+    }
+  ],
+  "recommended": "ship",
+  "fingerprint": "rev-42",
+  "ttl_seconds": 3600
+}
