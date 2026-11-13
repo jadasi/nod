@@ -86,7 +86,7 @@
     },
     "resources": {
       "type": "array",
-      "items": { "type": "string", "pattern": "^[a-z_]+:.+$" },
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*:.+$" },
       "description": "Lock keys this decision would act on, e.g. env:dental-staging, email-thread:abc123, branch:repo/name."
     },
     "evidence": {

@@ -1,0 +1,30 @@
+{
+  "idempotency_key": "thread-abc-1",
+  "source": { "system": "email_triage", "ref": "thread-abc", "agent": "hermes" },
+  "provenance": { "kind": "external", "origin": "x@example.com" },
+  "glance": { "title": "Reply to vendor quote", "question": "Send the drafted reply?" },
+  "impact": "The vendor learns we accept their price.",
+  "options": [
+    {
+      "id": "send",
+      "label": "Send",
+      "outcome": "Vendor receives the reply.",
+      "reversible": false,
+      "writes": true
+    },
+    {
+      "id": "hold",
+      "label": "Hold",
+      "outcome": "No reply goes out.",
+      "reversible": true,
+      "writes": false
+    }
+  ],
+  "recommended": "hold",
+  "confidence": 0.7,
+  "default": { "option": "hold", "deadline": "2026-11-14T15:00:00Z" },
+  "urgency": "urgent",
+  "resources": ["email-thread:abc"],
+  "fingerprint": "msg-9",
+  "ttl_seconds": 7200
+}

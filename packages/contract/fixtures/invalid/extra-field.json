@@ -1,0 +1,14 @@
+{
+  "source": { "system": "paperclip", "ref": "a" },
+  "provenance": { "kind": "internal" },
+  "glance": { "title": "t", "question": "q" },
+  "impact": "x",
+  "options": [
+    { "id": "a", "label": "A", "outcome": "o", "reversible": true, "writes": false },
+    { "id": "b", "label": "B", "outcome": "o", "reversible": true, "writes": false }
+  ],
+  "recommended": "a",
+  "fingerprint": "f",
+  "ttl_seconds": 60,
+  "status": "approved"
+}
