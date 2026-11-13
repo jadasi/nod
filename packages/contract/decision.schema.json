@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jadasi/mission-control/packages/contract/decision.schema.json",
+  "$id": "https://github.com/jadasi/nod/packages/contract/decision.schema.json",
   "title": "DecisionRequest",
-  "description": "What an agent submits via request_decision. Mission Control adds id, status, timestamps, classification and audit fields on its side. Field limits on `glance` exist so cards fit the Even G2 576x288 display.",
+  "description": "What an agent submits via request_decision. Nod adds id, status, timestamps, classification and audit fields on its side. Field limits on `glance` exist so cards fit the Even G2 576x288 display.",
   "type": "object",
   "additionalProperties": false,
   "required": ["source", "provenance", "glance", "impact", "options", "recommended", "fingerprint", "ttl_seconds"],
@@ -82,7 +82,7 @@
     "fingerprint": {
       "type": "string",
       "maxLength": 256,
-      "description": "Opaque precondition token from the source (revision, branch SHA, thread last-message id, deploy id). Mission Control re-reads the source and compares before writing an answer."
+      "description": "Opaque precondition token from the source (revision, branch SHA, thread last-message id, deploy id). Nod re-reads the source and compares before writing an answer."
     },
     "resources": {
       "type": "array",

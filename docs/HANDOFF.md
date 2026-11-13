@@ -1,4 +1,6 @@
-# Mission Control — handoff
+# Nod — handoff
+
+_Formerly "Mission Control" in the design doc; renamed to Nod on 2026-11-13._
 
 Everything decided in the design session on 2026-11-13, so a fresh session (human or agent) can build without the original chat.
 
@@ -7,7 +9,7 @@ Everything decided in the design session on 2026-11-13, so a fresh session (huma
 
 ## 1. What we're building
 
-A **decision router** for one person (David). Agents across his tools block on him for approvals and choices; today he must sit at a desk and open each tool. Mission Control:
+A **decision router** for one person (David). Agents across his tools block on him for approvals and choices; today he must sit at a desk and open each tool. Nod:
 
 1. Takes in every "needs a human" request from every source as one structured **Decision**.
 2. Cuts how many reach him: standing rules, defaults on silence, dedupe, cooldown batching.
@@ -32,7 +34,7 @@ Success metric: **time tasks spend waiting on David**, and **decisions per day r
 | Hours | **8am–8pm America/Phoenix.** Outside hours only `urgent` alerts. Everything else waits for an 8am digest; default-on-silence deadlines pause overnight. |
 | Default on silence | Every request states what happens if unanswered by its deadline. On glasses this is UI, not text: the default option is highlighted with a draining countdown ring. |
 | Framing | Decisions are framed by **human / end-user impact**, not technical detail. Agents own technical review. Cards and detail view lead with "what changes, for whom"; options are phrased as outcomes; technical evidence is collapsed at the bottom. David makes product, vendor, cost and people calls. |
-| Call or card | The classifier decides per request. Fits a quick choice → card. Can't be summarized into a quick choice → Mission Control **calls David** (open hours only). No pickup → falls back to a card. |
+| Call or card | The classifier decides per request. Fits a quick choice → card. Can't be summarized into a quick choice → Nod **calls David** (open hours only). No pickup → falls back to a card. |
 | Updates tab | Scheduled sweep of all work areas every 2 hours (8am–8pm) plus an end-of-day digest. Shown as an **Updates** tab in the app and on glasses. |
 | New tasks | OpenSpec change proposal only when the target project's `AGENTS.md` asks for it. Otherwise a plain Paperclip task brief. |
 | Classification | **Haiku-class model with structured output** (urgency, risk, call-or-card, duplicate-of, project) and it writes glance/impact text. Behind one `Classifier` interface. TypeSafe's Jev was evaluated and is not needed at this volume. |
@@ -68,7 +70,7 @@ Agents never talk to a surface directly. Everything goes through core.
 | Android app | Expo + NativeWind + react-native-reusables + TanStack Query + Zustand | Same stack as HUM Operator. Actionable notifications (lock screen, Wear OS). |
 | Glasses | Even Hub app, `@evenrealities/even_hub_sdk`, TypeScript/Vite | Runs inside the Even app on the phone; 576×288 monochrome green; R1 ring: swipe = move, tap = select, double tap = skip, long press = Call Me. G2 has mics, no speaker. Build against the simulator now. |
 | "Other" dictation | GPT-Realtime-Whisper ($0.017/min) or a G2 STT shim | |
-| Auth/audit | Device-bound token for the single user; scoped per-source tokens; append-only decision log | Mission Control can deploy to prod: treat as a prod credential. |
+| Auth/audit | Device-bound token for the single user; scoped per-source tokens; append-only decision log | Nod can deploy to prod: treat as a prod credential. |
 
 ## 4. The Decision object (summary)
 
@@ -94,7 +96,7 @@ See `packages/contract/decision.schema.json` for the authoritative schema. Key f
 3. **Agents re-check.** `await_decision` returns the answer plus the fingerprint it was made against; the agent verifies preconditions before acting (compare-and-swap).
 4. **Expiry.** Each request has a TTL kept alive by agent heartbeat; dead agent → card withdraws ("agent stopped").
 5. **Resource locks.** Registry of what each pending decision acts on; a second decision on the same resource queues behind or merges into the first.
-6. **Events first, sweep second.** Webhooks/SSE for speed; a reconciler every 5 minutes diffs open cards against sources, catching missed events and manual changes ("resolved outside Mission Control").
+6. **Events first, sweep second.** Webhooks/SSE for speed; a reconciler every 5 minutes diffs open cards against sources, catching missed events and manual changes ("resolved outside Nod").
 7. **Idempotent writes.** Every outcome carries an idempotency key.
 8. **Visible freshness.** Each card shows "checked 40s ago"; older than the reconciler interval → refresh state.
 9. **Repair tools.** "Stale & conflicts" queue: re-ask, withdraw, force refresh; linked to the audit log.

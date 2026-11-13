@@ -1,10 +1,10 @@
-# AGENTS.md — Mission Control
+# AGENTS.md — Nod
 
 Read `docs/HANDOFF.md` before doing anything. It holds every product decision. Don't re-decide what's settled there; if something seems wrong, raise it instead of changing it.
 
 ## What this repo is
 
-A single-user decision router. Agents submit structured decision requests; Mission Control filters, routes and shows them on an Android app, notifications and Even G2 glasses, and writes answers back to the source after an undo window.
+A single-user decision router. Agents submit structured decision requests; Nod filters, routes and shows them on an Android app, notifications and Even G2 glasses, and writes answers back to the source after an undo window.
 
 ## Layout (target)
 

@@ -14,7 +14,7 @@ Nothing covers the whole loop. Every agent inbox found is keyed to coding sessio
 | [handup](https://dev.to/arielf/one-inbox-for-all-my-agents-42lk) | MCP tools `notify`, `ask_question` (choices), `request_approval`; swipe-to-approve mobile inbox over Tailscale. License unknown. | Copy the data model. David liked it. |
 | [Happier](https://docs.happier.dev/features/inbox-and-approvals) | Global inbox of approvals and structured user-action requests; actionable push. | UX reference. Coding-session bound. |
 | Happy (MIT, unverified) | Mobile mirror of Claude Code / Codex sessions. | Not the inbox. |
-| [Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/) | Gateway (Telegram, Slack, Email, …), webhooks, OpenAI-compatible API server; `/approve` `/deny` for dangerous commands. | Email-triage worker; bridge its approvals into Mission Control. |
+| [Hermes Agent](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/) | Gateway (Telegram, Slack, Email, …), webhooks, OpenAI-compatible API server; `/approve` `/deny` for dangerous commands. | Email-triage worker; bridge its approvals into Nod. |
 | [call-me](https://second-brain-nuxt.vercel.app/call-me) | Claude Code plugin; Twilio calls; turn-based STT/TTS; ~$0.03–0.04/min. | Reference only — not realtime. |
 | [OpenAI SIP / Live sessions](https://developers.openai.com/api/docs/guides/voice-sip) | Inbound SIP; outbound dial-out on `gpt-live-1`; sideband WebSocket for tools/transcripts. | Voice engine. |
 | [LiveKit Agents](https://livekit.com/blog/human-in-the-loop-voice-agents) | Open-source realtime voice: WebRTC, SIP dial-out, function tools, any model. | Voice transport. |
