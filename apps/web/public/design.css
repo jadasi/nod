@@ -1,0 +1,163 @@
+/* Layout for the design system reference page (/design.html) only. */
+.ds {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+.ds-intro {
+  display: grid;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+  border-bottom: var(--border-hairline) solid var(--color-line);
+}
+.ds-intro p {
+  max-width: 70ch;
+  color: var(--color-text-dim);
+}
+.ds section {
+  margin-bottom: var(--space-7);
+}
+.ds section > .view-head {
+  margin-bottom: var(--space-4);
+}
+.ds-grid {
+  display: grid;
+  align-items: start;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.ds-swatch {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-hairline) solid var(--color-line);
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line);
+}
+.ds-chip {
+  grid-row: span 3;
+  width: 48px;
+  height: 48px;
+  border: var(--border-hairline) solid var(--color-line-strong);
+}
+.ds-swatch b {
+  color: var(--color-phosphor);
+}
+.ds-swatch .dim {
+  color: var(--color-text-dim);
+}
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--type-small-size);
+}
+.ds-table th,
+.ds-table td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-hairline) solid var(--color-line);
+  vertical-align: top;
+}
+.ds-table th {
+  color: var(--color-text-dim);
+  font-weight: var(--type-label-weight);
+  font-size: var(--type-label-size);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: uppercase;
+}
+.ds-pass {
+  color: var(--color-phosphor);
+}
+.ds-fail {
+  color: var(--color-red);
+}
+.ds-type {
+  display: grid;
+  gap: var(--space-4);
+}
+.ds-type > div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: var(--space-4);
+  align-items: baseline;
+}
+.ds-pixels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: flex-end;
+}
+.ds-space {
+  display: grid;
+  gap: var(--space-2);
+}
+.ds-space > div {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--type-small-size);
+}
+.ds-bar {
+  height: 12px;
+  background: var(--color-phosphor);
+}
+.ds-icons {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.ds-icon {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2) var(--space-3);
+  border: var(--border-hairline) solid var(--color-line);
+  color: var(--color-phosphor);
+  text-align: center;
+}
+.ds-icon .sizes {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.ds-icon small {
+  color: var(--color-text-dim);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line);
+}
+.ds-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.ds-stack {
+  display: grid;
+  gap: var(--space-3);
+}
+.ds-cols {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+.ds-caption {
+  margin-bottom: var(--space-2);
+}
+.ds-hud {
+  border: var(--border-hairline) solid var(--color-line);
+}
+.ds .meter-fill {
+  animation: none;
+}
+/* Show the phone status bar as-is, even though this page is wide. */
+.ds .hud-bar {
+  flex-direction: row;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+}
+.ds .hud-bar .clock {
+  display: block;
+}
