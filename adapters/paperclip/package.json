@@ -32,7 +32,6 @@
     "directory": "adapters/paperclip"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   }
 }
