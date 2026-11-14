@@ -1,7 +1,17 @@
 // Caches the app shell so the inbox opens instantly. API calls are never cached:
 // a stale decision shown as current would defeat the point.
-const SHELL = 'nod-shell-v1';
-const FILES = ['/', '/app.js', '/lib.js', '/style.css', '/manifest.webmanifest', '/icon.svg'];
+const SHELL = 'nod-shell-v2';
+const FILES = [
+  '/',
+  '/app.js',
+  '/lib.js',
+  '/pixel.js',
+  '/tokens.js',
+  '/tokens.css',
+  '/style.css',
+  '/manifest.webmanifest',
+  '/icon.svg',
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(SHELL).then((c) => c.addAll(FILES)));
