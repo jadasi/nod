@@ -1,14 +1,20 @@
 /*
  * Nod web inbox: the "Phosphor" design system.
  * Every value comes from tokens.css (generated from packages/design-tokens/tokens.json).
- * Reference page: /design.html
+ * Gray monochrome with phosphor green as a strong accent. Pixel effects (corner brackets,
+ * scanlines, glow) are emphasis: action items and hover/focus only. Reference page: /design.html
  */
 
 /* ---------------------------------------------------------------- base */
 
 :root {
-  color-scheme: dark;
-  --focus: var(--border-focus) solid var(--color-phosphor);
+  --focus: var(--border-focus) solid var(--color-accent-ink);
+  /* Scanlines: thin accent lines every few pixels. Used for emphasis only. */
+  --scanlines: repeating-linear-gradient(
+    to bottom,
+    transparent 0 calc(var(--effect-scanline-pitch) - 1px),
+    var(--effect-scanline) calc(var(--effect-scanline-pitch) - 1px) var(--effect-scanline-pitch)
+  );
 }
 * {
   box-sizing: border-box;
@@ -24,20 +30,8 @@ body {
   font-family: var(--font-body);
   font-size: var(--type-body-size);
   line-height: var(--type-body-line);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
-}
-/* Static CRT scanlines: barely there, and off for anyone who asks for less. */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 100;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0 2px,
-    rgb(var(--color-phosphor-rgb) / var(--effect-scanline-opacity)) 2px 3px
-  );
 }
 h1,
 h2,
@@ -46,11 +40,13 @@ p {
   margin: 0;
 }
 a {
-  color: var(--color-phosphor);
+  color: var(--color-text);
+  text-decoration-color: var(--color-line-strong);
   text-underline-offset: 3px;
 }
 a:hover {
-  color: var(--color-text);
+  color: var(--color-accent-ink);
+  text-decoration-color: currentColor;
 }
 :focus-visible,
 .is-focus {
@@ -58,8 +54,8 @@ a:hover {
   outline-offset: var(--border-focus-offset);
 }
 ::selection {
-  background: var(--color-phosphor);
-  color: var(--color-on-phosphor);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 .sr-only {
   position: absolute;
@@ -76,14 +72,14 @@ a:hover {
   top: -100px;
   z-index: 101;
   padding: var(--space-2) var(--space-3);
-  background: var(--color-phosphor);
-  color: var(--color-on-phosphor);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 .skip:focus {
   top: var(--space-3);
 }
 
-/* Small uppercase HUD label: section names, tags, button captions. */
+/* Small uppercase label: section names, tags, button captions. */
 .label {
   display: inline-flex;
   align-items: center;
@@ -99,14 +95,72 @@ a:hover {
   margin-right: var(--space-2);
 }
 
-/* Pixel-font display text (inline SVG from pixel.js). */
+/* Pixel-font display text (inline SVG from pixel.js). Gray unless it is high-visibility. */
 .pixel {
   display: block;
-  color: var(--color-phosphor);
-  filter: drop-shadow(0 0 3px rgb(var(--color-phosphor-rgb) / 0.45));
 }
 .pixel-heading {
-  color: var(--color-phosphor);
+  color: var(--color-text);
+}
+
+/* ---------------------------------------------------------------- emphasis toolkit */
+
+/* Corner brackets: four short accent ticks, like a HUD frame. Opt-in via .emph or interaction. */
+.emph,
+.card,
+.btn,
+.banner.undo {
+  --tick: transparent;
+  --tick-len: 8px;
+  background-image:
+    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick));
+  background-repeat: no-repeat;
+  background-size:
+    var(--tick-len) 2px,
+    2px var(--tick-len),
+    var(--tick-len) 2px,
+    2px var(--tick-len),
+    var(--tick-len) 2px,
+    2px var(--tick-len),
+    var(--tick-len) 2px,
+    2px var(--tick-len);
+  background-position:
+    top left,
+    top left,
+    top right,
+    top right,
+    bottom left,
+    bottom left,
+    bottom right,
+    bottom right;
+}
+.emph,
+.banner.undo {
+  --tick: var(--color-accent-ink);
+}
+
+/* Scanline overlay, drawn above the content without blocking clicks. */
+.card,
+.btn,
+.scan {
+  position: relative;
+}
+.card::after,
+.btn::after,
+.scan::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--scanlines);
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--motion-easing);
+}
+.scan::after {
+  opacity: 1;
 }
 
 /* ---------------------------------------------------------------- shell + HUD */
@@ -130,11 +184,15 @@ a:hover {
 }
 .wordmark {
   line-height: 0;
+  color: var(--color-accent-ink);
+}
+.wordmark .pixel {
+  filter: drop-shadow(var(--effect-glow));
 }
 .hud-status {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 .conn {
   display: inline-flex;
@@ -151,7 +209,7 @@ a:hover {
 }
 .conn-on {
   display: none !important;
-  color: var(--color-phosphor);
+  color: var(--color-accent-ink);
 }
 .conn-off {
   color: var(--color-red);
@@ -163,7 +221,30 @@ a:hover {
   display: none !important;
 }
 .clock {
-  color: var(--color-phosphor);
+  color: var(--color-text);
+}
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: var(--size-control-small);
+  height: var(--size-control-small);
+  padding: 0;
+  background: none;
+  border: var(--border-hairline) solid var(--color-line);
+  color: var(--color-text-dim);
+  cursor: pointer;
+}
+.theme-toggle:hover {
+  color: var(--color-text);
+  border-color: var(--color-line-strong);
+}
+.theme-toggle .icon {
+  display: none;
+}
+.theme-toggle[data-mode='system'] .icon-auto,
+.theme-toggle[data-mode='light'] .icon-sun,
+.theme-toggle[data-mode='dark'] .icon-moon {
+  display: inline-block;
 }
 .hud-rail {
   display: none;
@@ -200,8 +281,8 @@ nav button:hover {
   color: var(--color-text);
 }
 nav button.active {
-  color: var(--color-phosphor);
-  border-bottom-color: var(--color-phosphor);
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
 }
 nav button:focus-visible {
   outline-offset: calc(var(--border-focus) * -1);
@@ -209,8 +290,8 @@ nav button:focus-visible {
 .count:not(:empty) {
   min-width: 20px;
   padding: 0 var(--space-1);
-  background: var(--color-phosphor);
-  color: var(--color-on-phosphor);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
   text-align: center;
   letter-spacing: 0;
 }
@@ -246,8 +327,7 @@ main:focus {
     background: transparent;
   }
   .hud-bar {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
     padding: 0;
     gap: var(--space-4);
   }
@@ -259,15 +339,35 @@ main:focus {
     flex-direction: column;
     gap: var(--space-3);
   }
-  .hud-date .pixel {
+  .hud-date {
     color: var(--color-text-dim);
-    filter: none;
+  }
+  /* The big clock reads like a little display: dot matrix with faint scanlines across it. */
+  .hud-clock {
+    position: relative;
+    align-self: flex-start;
+    color: var(--color-text);
+  }
+  .hud-clock .pixel {
+    -webkit-mask: repeating-linear-gradient(
+      to bottom,
+      #000 0 2px,
+      rgb(0 0 0 / 0.55) 2px var(--effect-scanline-pitch)
+    );
+    mask: repeating-linear-gradient(
+      to bottom,
+      #000 0 2px,
+      rgb(0 0 0 / 0.55) 2px var(--effect-scanline-pitch)
+    );
   }
   .hud-waiting {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    color: var(--color-phosphor);
+    color: var(--color-accent-ink);
+  }
+  .hud-count .pixel {
+    filter: drop-shadow(var(--effect-glow));
   }
   nav {
     flex-direction: column;
@@ -283,8 +383,8 @@ main:focus {
     padding: 0 var(--space-2);
   }
   nav button.active {
-    border-left-color: var(--color-phosphor);
-    background: var(--color-phosphor-deep);
+    border-left-color: var(--color-text);
+    background: var(--color-surface);
   }
   nav .count {
     margin-left: auto;
@@ -335,39 +435,10 @@ main:focus {
 
 /* ---------------------------------------------------------------- panels */
 
-/* Thin outlined panel with phosphor corner ticks, like a HUD frame. */
-.panel,
-.card {
-  --tick: var(--color-phosphor);
-  position: relative;
+/* Plain informational panel: a clean gray outline. Add .emph only when it asks for action. */
+.panel {
   background-color: var(--color-surface);
   border: var(--border-hairline) solid var(--color-line);
-  background-image:
-    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick)),
-    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick)),
-    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick)),
-    linear-gradient(var(--tick), var(--tick)), linear-gradient(var(--tick), var(--tick));
-  background-repeat: no-repeat;
-  background-size:
-    8px 1px,
-    1px 8px,
-    8px 1px,
-    1px 8px,
-    8px 1px,
-    1px 8px,
-    8px 1px,
-    1px 8px;
-  background-position:
-    top left,
-    top left,
-    top right,
-    top right,
-    bottom left,
-    bottom left,
-    bottom right,
-    bottom right;
-}
-.panel {
   padding: var(--space-5);
 }
 
@@ -392,23 +463,42 @@ main:focus {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
+  background-color: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-line);
   cursor: pointer;
-  transition:
-    background-color var(--motion-fast) var(--motion-easing),
-    border-color var(--motion-fast) var(--motion-easing);
+  transition: border-color var(--motion-fast) var(--motion-easing);
 }
-.card:hover,
-.card.is-hover {
-  background-color: var(--color-surface-raised);
-  border-color: var(--color-line-strong);
-}
-.card:active {
-  background-color: var(--color-phosphor-deep);
+/* Needs an answer: accent corner brackets. Answered or waiting on someone else: plain. */
+.card.needs-you {
+  --tick: var(--color-accent-ink);
 }
 .card.urgent {
-  --tick: var(--color-red);
-  border-color: rgb(var(--color-red-rgb) / 0.55);
+  border-left-color: var(--color-red);
   box-shadow: inset var(--border-accent) 0 0 var(--color-red);
+}
+.card.urgent.needs-you {
+  --tick: var(--color-red);
+}
+/* Hover and focus: scanlines and brackets appear, instead of a solid fill. */
+.card:hover,
+.card:focus-visible,
+.card.is-hover {
+  --tick: var(--color-accent-ink);
+  border-color: var(--color-line-strong);
+}
+.card.urgent:hover,
+.card.urgent:focus-visible,
+.card.urgent.is-hover {
+  --tick: var(--color-red);
+  border-left-color: var(--color-red);
+}
+.card:hover::after,
+.card:focus-visible::after,
+.card.is-hover::after {
+  opacity: 1;
+}
+.card:active {
+  background-color: var(--color-surface-raised);
 }
 .card-body {
   flex: 1;
@@ -420,19 +510,20 @@ main:focus {
   font-size: var(--type-title-size);
   line-height: var(--type-title-line);
   font-weight: var(--type-title-weight);
-  color: var(--color-phosphor);
+  color: var(--color-text);
   overflow-wrap: anywhere;
 }
 .question {
-  color: var(--color-text);
+  color: var(--color-text-dim);
   overflow-wrap: anywhere;
 }
 .card-go {
   color: var(--color-text-dim);
 }
 .card:hover .card-go,
-.card:focus-visible .card-go {
-  color: var(--color-phosphor);
+.card:focus-visible .card-go,
+.card.is-hover .card-go {
+  color: var(--color-accent-ink);
 }
 .live-banner:empty {
   display: none;
@@ -441,7 +532,7 @@ main:focus {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--color-phosphor);
+  color: var(--color-accent-ink);
   font-size: var(--type-label-size);
   line-height: var(--type-label-line);
   font-weight: var(--type-label-weight);
@@ -482,7 +573,7 @@ main:focus {
 .tag.urgent {
   background: var(--color-red);
   border-color: var(--color-red);
-  color: var(--color-on-phosphor);
+  color: var(--color-on-red);
 }
 .tag.external,
 .tag.write {
@@ -490,8 +581,8 @@ main:focus {
   color: var(--color-amber);
 }
 .tag.sending {
-  border-color: var(--color-phosphor);
-  color: var(--color-phosphor);
+  border-color: var(--color-accent-ink);
+  color: var(--color-accent-ink);
 }
 
 /* ---------------------------------------------------------------- buttons */
@@ -503,49 +594,69 @@ main:focus {
   gap: var(--space-2);
   min-height: var(--size-control);
   padding: var(--space-2) var(--space-4);
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   border: var(--border-hairline) solid var(--color-line-strong);
   color: var(--color-text);
   font: inherit;
+  font-weight: 500;
   cursor: pointer;
   transition:
-    background-color var(--motion-fast) var(--motion-easing),
     border-color var(--motion-fast) var(--motion-easing),
     box-shadow var(--motion-fast) var(--motion-easing);
 }
+.btn > * {
+  position: relative;
+  z-index: 1;
+}
 .btn:hover,
 .btn.is-hover {
-  background: var(--color-surface-raised);
-  border-color: var(--color-phosphor);
+  border-color: var(--color-text);
+}
+.btn:hover::after,
+.btn.is-hover::after,
+.btn:focus-visible::after {
+  opacity: 1;
 }
 .btn:active,
 .btn.is-pressed {
-  background: var(--color-phosphor-deep);
-  box-shadow: inset 0 0 0 1px var(--color-phosphor);
+  background-color: var(--color-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--color-text);
 }
 .btn:disabled,
 .btn:disabled:hover {
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   border-color: var(--color-line);
   color: var(--color-text-faint);
   box-shadow: none;
   cursor: not-allowed;
 }
+.btn:disabled::after {
+  opacity: 0;
+}
+/* Primary: the green action. Hover adds dark scanlines and glow. */
 .btn.primary {
-  background: var(--color-phosphor);
-  border-color: var(--color-phosphor);
-  color: var(--color-on-phosphor);
+  background-color: var(--color-accent);
+  border-color: var(--color-accent-ink);
+  color: var(--color-on-accent);
+}
+.btn.primary::after {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgb(0 0 0 / 0.14) 2px var(--effect-scanline-pitch)
+  );
 }
 .btn.primary:hover,
 .btn.primary.is-hover {
+  border-color: var(--color-accent-ink);
   box-shadow: var(--effect-glow);
 }
 .btn.primary:active,
 .btn.primary.is-pressed {
-  box-shadow: inset 0 0 0 2px var(--color-on-phosphor);
+  box-shadow: inset 0 0 0 2px var(--color-on-accent);
 }
 .btn.primary:disabled {
-  background: var(--color-phosphor-deep);
+  background-color: var(--color-surface-raised);
   border-color: var(--color-line);
   color: var(--color-text-faint);
 }
@@ -553,12 +664,16 @@ main:focus {
   border-color: var(--color-red);
   color: var(--color-red);
 }
-.btn.danger:hover,
-.btn.danger.is-hover {
-  background: var(--color-red-deep);
+.btn.danger::after {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    var(--color-red-deep) 2px var(--effect-scanline-pitch)
+  );
 }
 .btn.danger:active,
 .btn.danger.is-pressed {
+  background-color: var(--color-red-deep);
   box-shadow: inset 0 0 0 1px var(--color-red);
 }
 .btn.small {
@@ -585,7 +700,7 @@ main:focus {
   padding: 0 var(--space-1);
   background: none;
   border: 0;
-  color: var(--color-phosphor);
+  color: var(--color-text-dim);
   font: inherit;
   font-size: var(--type-label-size);
   font-weight: var(--type-label-weight);
@@ -603,14 +718,15 @@ main:focus {
   display: grid;
   gap: var(--space-3);
 }
-.decision.urgent {
+.decision.needs-you.urgent {
   --tick: var(--color-red);
 }
 .detail-title {
-  font-size: calc(var(--type-lead-size) + 3px);
-  line-height: var(--type-lead-line);
+  font-size: calc(var(--type-lead-size) + 5px);
+  line-height: 32px;
   font-weight: var(--type-title-weight);
-  color: var(--color-phosphor);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
   overflow-wrap: anywhere;
 }
 .decision > .label {
@@ -633,7 +749,7 @@ main:focus {
   text-align: left;
 }
 .option .cursor {
-  margin-top: 2px;
+  margin-top: 4px;
   opacity: 0;
 }
 .option:hover .cursor,
@@ -649,13 +765,14 @@ main:focus {
 .option .label {
   color: inherit;
   font-size: var(--type-body-size);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   flex-wrap: wrap;
   gap: var(--space-2);
 }
 .option .outcome {
   font-size: var(--type-small-size);
   line-height: var(--type-small-line);
+  font-weight: 400;
 }
 .btn.option:not(.primary) .outcome {
   color: var(--color-text-dim);
@@ -678,15 +795,15 @@ main:focus {
   margin-top: 0;
 }
 
-/* Answer status banner, incl. the undo bar with its draining countdown. */
+/* Answer status banner. The undo bar is an action item: brackets, scanlines, draining meter. */
 .banner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
   padding: var(--space-3);
-  border: var(--border-hairline) solid currentColor;
-  background: var(--color-surface);
+  border: var(--border-hairline) solid var(--color-line-strong);
+  background-color: var(--color-surface);
   color: var(--color-text);
 }
 .banner-icon,
@@ -697,24 +814,41 @@ main:focus {
   flex: 1;
   font-weight: 700;
 }
-.banner.undo,
-.banner.done {
-  background: var(--color-phosphor-deep);
-  color: var(--color-phosphor);
+.banner.done > .icon {
+  color: var(--color-accent-ink);
+}
+.banner.undo {
+  position: relative;
+  background-color: var(--color-accent-deep);
+  border-color: var(--color-accent-ink);
+  color: var(--color-accent-ink);
+}
+.banner.undo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--scanlines);
+}
+.banner.undo > * {
+  position: relative;
+  z-index: 1;
 }
 .banner.held {
-  background: var(--color-amber-deep);
+  background-color: var(--color-amber-deep);
+  border-color: var(--color-amber);
   color: var(--color-amber);
 }
 .banner.stale,
 .banner.failed {
-  background: var(--color-red-deep);
+  background-color: var(--color-red-deep);
+  border-color: var(--color-red);
   color: var(--color-red);
 }
 .banner .btn {
   border-color: currentColor;
   color: inherit;
-  background: var(--color-bg);
+  background-color: var(--color-bg);
 }
 .detail .banner.undo {
   position: sticky;
@@ -725,13 +859,13 @@ main:focus {
 .meter {
   flex-basis: 100%;
   height: 6px;
-  background: rgb(var(--color-phosphor-rgb) / 0.15);
+  background: var(--color-line);
   -webkit-mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
   mask: repeating-linear-gradient(90deg, #000 0 6px, transparent 6px 8px);
 }
 .meter-fill {
   height: 100%;
-  background: currentColor;
+  background: var(--color-accent-ink);
   transform-origin: left;
   transform: scaleX(var(--from));
   animation: drain var(--left) linear forwards;
@@ -764,7 +898,7 @@ main:focus {
   margin-left: auto;
 }
 
-/* Evidence disclosure. */
+/* Evidence disclosure: quiet, collapsed by default. */
 .evidence {
   margin-top: var(--space-2);
   border-top: var(--border-hairline) solid var(--color-line);
@@ -787,7 +921,7 @@ main:focus {
 }
 .evidence summary:hover,
 .evidence[open] summary {
-  color: var(--color-phosphor);
+  color: var(--color-text);
 }
 .evidence-count {
   padding: 0 var(--space-1);
@@ -823,7 +957,7 @@ pre {
   background: var(--color-bg);
   border: var(--border-hairline) solid var(--color-line);
   color: var(--color-text);
-  font: inherit;
+  font-family: var(--font-mono);
   font-size: var(--type-small-size);
 }
 
@@ -840,7 +974,7 @@ input[type='text'] {
   border-radius: var(--radius-none);
   color: var(--color-text);
   font: inherit;
-  caret-color: var(--color-phosphor);
+  caret-color: var(--color-accent-ink);
 }
 textarea::placeholder,
 input::placeholder {
@@ -849,12 +983,12 @@ input::placeholder {
 }
 textarea:hover,
 input:hover {
-  border-color: var(--color-phosphor);
+  border-color: var(--color-text);
 }
 textarea:focus-visible,
 input:focus-visible {
   outline-offset: 0;
-  border-color: var(--color-phosphor);
+  border-color: var(--color-accent-ink);
 }
 input[aria-invalid='true'] {
   border-color: var(--color-red);
@@ -869,11 +1003,14 @@ input[aria-invalid='true'] {
   gap: var(--space-2);
 }
 .login-head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
   margin-bottom: var(--space-3);
-  color: var(--color-phosphor);
+}
+.login-head .illo {
+  width: 128px;
+  color: var(--color-text-dim);
 }
 .help {
   color: var(--color-text-dim);
@@ -888,15 +1025,19 @@ input[aria-invalid='true'] {
   justify-items: center;
   align-content: center;
   gap: var(--space-3);
-  margin: var(--space-7) 0;
+  margin: var(--space-6) 0;
   padding: var(--space-7) var(--space-4);
   border: var(--border-hairline) dashed var(--color-line);
   color: var(--color-text-dim);
   text-align: center;
 }
+.empty > .illo {
+  width: 128px;
+  margin-bottom: var(--space-2);
+  color: var(--color-text-dim);
+}
 .empty > .icon {
-  color: var(--color-phosphor);
-  opacity: 0.85;
+  color: var(--color-text-dim);
 }
 
 /* ---------------------------------------------------------------- updates */
@@ -914,57 +1055,13 @@ input[aria-invalid='true'] {
 }
 .update > .icon {
   margin-top: 6px;
-  color: var(--color-phosphor);
-}
-.update strong {
-  color: var(--color-phosphor);
+  color: var(--color-text-dim);
 }
 .update small {
   display: block;
   margin-top: var(--space-1);
   color: var(--color-text-dim);
   font-size: var(--type-small-size);
-}
-
-/* ---------------------------------------------------------------- preferences */
-
-/* Glow, scanlines and cosmetic transitions go away under reduced motion. The undo
-   meter stays: it is information, not decoration, and it moves slowly without flashing. */
-@media (prefers-reduced-motion: reduce) {
-  body::after {
-    display: none;
-  }
-  .pixel {
-    filter: none;
-  }
-  .btn.primary:hover {
-    box-shadow: none;
-  }
-  .card,
-  .btn,
-  .disclosure {
-    transition: none;
-  }
-}
-@media (prefers-contrast: more) {
-  body::after {
-    display: none;
-  }
-  .pixel {
-    filter: none;
-  }
-  .card,
-  .panel {
-    border-color: var(--color-line-strong);
-  }
-}
-@media (forced-colors: active) {
-  .icon,
-  .live-banner::before,
-  .mode::before {
-    forced-color-adjust: none;
-    background: CanvasText;
-  }
 }
 
 /* Phones: keep all three tabs on screen and give card text the full width. */
@@ -986,5 +1083,72 @@ input[aria-invalid='true'] {
   }
   main {
     padding: var(--space-3) var(--space-3) var(--space-8);
+  }
+}
+
+/* ---------------------------------------------------------------- preferences */
+
+/* Under reduced motion, glow, scanlines and transitions go away; hover falls back to a plain
+   fill. The undo meter stays: it is information, not decoration, and it moves without flashing. */
+@media (prefers-reduced-motion: reduce) {
+  .card::after,
+  .btn::after,
+  .scan::after,
+  .banner.undo::after {
+    display: none;
+  }
+  .hud-clock .pixel {
+    -webkit-mask: none;
+    mask: none;
+  }
+  .wordmark .pixel,
+  .hud-count .pixel {
+    filter: none;
+  }
+  .card:hover,
+  .card:focus-visible {
+    background-color: var(--color-surface-raised);
+  }
+  .btn:hover {
+    background-color: var(--color-surface-raised);
+  }
+  .btn.primary:hover {
+    background-color: var(--color-accent);
+    box-shadow: none;
+  }
+  .card,
+  .btn,
+  .disclosure {
+    transition: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .card::after,
+  .btn::after,
+  .scan::after,
+  .banner.undo::after {
+    display: none;
+  }
+  .hud-clock .pixel {
+    -webkit-mask: none;
+    mask: none;
+  }
+  .wordmark .pixel,
+  .hud-count .pixel {
+    filter: none;
+  }
+  .card,
+  .panel {
+    border-color: var(--color-line-strong);
+  }
+}
+@media (forced-colors: active) {
+  .icon,
+  .illo::before,
+  .illo::after,
+  .live-banner::before,
+  .mode::before {
+    forced-color-adjust: none;
+    background: CanvasText;
   }
 }

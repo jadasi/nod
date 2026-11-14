@@ -11,9 +11,16 @@ describe('service worker shell cache', () => {
     const sw = read('sw.js');
     const cached = [...sw.matchAll(/'(\/[^']*)'/g)].map((m) => m[1]);
     // Everything in public/ except the worker itself and the design reference page.
-    const shell = readdirSync(pub)
-      .filter((f) => f !== 'sw.js' && f !== 'index.html' && !f.startsWith('design.'))
-      .map((f) => `/${f}`);
+    const shell = readdirSync(pub, { recursive: true, withFileTypes: true })
+      .filter((d) => d.isFile())
+      .map((d) =>
+        `${d.parentPath.slice(new URL(pub).pathname.length - 1)}/${d.name}`.replace('//', '/'),
+      )
+      .map((p) => (p.startsWith('/') ? p : `/${p}`))
+      .filter(
+        (f) =>
+          f !== '/sw.js' && f !== '/index.html' && !f.startsWith('/design.') && !f.endsWith('.txt'),
+      );
     for (const f of shell) expect(cached, f).toContain(f);
     expect(cached).toContain('/');
   });
@@ -21,7 +28,7 @@ describe('service worker shell cache', () => {
   it('only references assets that exist', () => {
     const html = read('index.html');
     for (const [, href] of html.matchAll(/(?:href|src)="\/([^"#]+)"/g)) {
-      expect(readdirSync(pub), href).toContain(href);
+      expect(() => readFileSync(new URL(href!, pub)), href).not.toThrow();
     }
   });
 });

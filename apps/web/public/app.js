@@ -203,7 +203,7 @@ function card(d) {
   return h(
     'div',
     {
-      class: `card link${d.urgency === 'urgent' ? ' urgent' : ''}`,
+      class: `card link${d.urgency === 'urgent' ? ' urgent' : ''}${d.status === 'open' && !d.answer ? ' needs-you' : ''}`,
       'data-id': d.id,
       role: 'button',
       tabindex: '0',
@@ -336,7 +336,9 @@ function detail(d) {
     backButton(),
     h(
       'article',
-      { class: `panel decision${d.urgency === 'urgent' ? ' urgent' : ''}` },
+      {
+        class: `panel decision${d.urgency === 'urgent' ? ' urgent' : ''}${canAnswer ? ' emph needs-you' : ''}`,
+      },
       tags(d),
       h('h2', { class: 'detail-title' }, d.glance.title),
       label('Impact'),
@@ -459,11 +461,14 @@ function detail(d) {
   );
 }
 
+/** Pixel illustration (two inks) from tokens.css. Decorative. */
+const illo = (name) => h('span', { class: `illo illo-${name}`, 'aria-hidden': 'true' });
+
 function emptyState(iconName, title, text) {
   return h(
     'div',
     { class: 'empty' },
-    icon(iconName, 'lg'),
+    iconName === 'inbox' ? illo('empty') : icon(iconName, 'lg'),
     pixelHeading(title, 'p'),
     h('p', {}, text),
   );
@@ -515,8 +520,8 @@ function loginView() {
   input.addEventListener('keydown', (e) => e.key === 'Enter' && go());
   return h(
     'div',
-    { class: 'panel login' },
-    h('div', { class: 'login-head' }, icon('key', 'lg'), pixelHeading('Sign in')),
+    { class: 'panel login emph' },
+    h('div', { class: 'login-head' }, illo('signin'), pixelHeading('Sign in')),
     h('label', { class: 'label', for: 'token' }, 'Device token'),
     input,
     h(

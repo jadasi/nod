@@ -3,13 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#050805" />
+    <meta name="theme-color" content="#121314" />
     <meta name="robots" content="noindex" />
     <title>Nod</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/space-grotesk-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/style.css" />
+    <script src="/theme.js"></script>
   </head>
   <body>
     <a class="skip" href="#view">Skip to content</a>
@@ -27,6 +35,11 @@
               >
             </span>
             <span id="clock" class="clock"></span>
+            <button id="theme" class="theme-toggle" type="button" data-mode="system">
+              <span class="icon icon-auto sm" aria-hidden="true"></span>
+              <span class="icon icon-sun sm" aria-hidden="true"></span>
+              <span class="icon icon-moon sm" aria-hidden="true"></span>
+            </button>
           </div>
         </div>
         <div class="hud-rail" aria-hidden="true">

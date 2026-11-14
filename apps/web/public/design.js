@@ -1,7 +1,7 @@
 // The Phosphor design system reference page (/design.html). Static demo content only: no API
 // calls, no token, no decision data. Everything is drawn from tokens.js / tokens.css and the same
 // classes the inbox uses, so this page shows what ships.
-import { ICONS, TOKENS } from '/tokens.js';
+import { ICONS, ILLUSTRATIONS, TOKENS } from '/tokens.js';
 import { pixelSvg, setPixelText } from '/pixel.js';
 
 function h(tag, attrs = {}, ...kids) {
@@ -19,14 +19,40 @@ function h(tag, attrs = {}, ...kids) {
 }
 const icon = (name, size = '') =>
   h('span', { class: `icon icon-${name} ${size}`, 'aria-hidden': 'true' });
+const illo = (name) => h('span', { class: `illo illo-${name}`, 'aria-hidden': 'true' });
 const kebab = (s) => s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+const THEMES = Object.keys(TOKENS.themes);
 
+function pixel(tag, text, opts = { scale: 2 }, cls = 'pixel-heading') {
+  const el = h(tag, { class: cls });
+  setPixelText(el, text, opts);
+  return el;
+}
 function heading(text, note) {
-  const title = h('h2', { class: 'pixel-heading' });
-  setPixelText(title, text, { scale: 2 });
-  return h('div', { class: 'view-head' }, title, note && h('span', { class: 'label' }, note));
+  return h(
+    'div',
+    { class: 'view-head' },
+    pixel('h2', text),
+    note && h('span', { class: 'label' }, note),
+  );
 }
 const section = (title, note, ...body) => h('section', {}, heading(title, note), ...body);
+const caption = (text) => h('h3', { class: 'label ds-caption' }, text);
+
+/** Renders `build()` once per theme, side by side, each pane forcing its theme. */
+const both = (build) =>
+  h(
+    'div',
+    { class: 'ds-themes' },
+    THEMES.map((t) =>
+      h(
+        'div',
+        { class: 'ds-pane', 'data-theme': t },
+        h('p', { class: 'label' }, `${t} theme`),
+        build(),
+      ),
+    ),
+  );
 
 function luminance(hex) {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -39,83 +65,92 @@ function ratio(a, b) {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 }
-const hex = (name) => TOKENS.color[name].value;
+const hex = (name, theme) => TOKENS.themes[theme].color[name];
+const chip = (color) => h('span', { class: 'ds-chip', style: `background:${color}` });
 
 // ---------------------------------------------------------------- sections
 
 function intro() {
-  const mark = h('h1', { class: 'wordmark' });
-  setPixelText(mark, 'NOD PHOSPHOR', { scale: 4 });
   return h(
     'header',
     { class: 'ds-intro' },
-    mark,
+    h(
+      'div',
+      { class: 'ds-intro-top' },
+      pixel('h1', 'NOD PHOSPHOR', { scale: 4 }, 'wordmark'),
+      h(
+        'button',
+        { id: 'theme', class: 'theme-toggle', type: 'button', 'data-mode': 'system' },
+        icon('auto', 'sm'),
+        icon('sun', 'sm'),
+        icon('moon', 'sm'),
+      ),
+    ),
     h(
       'p',
       {},
-      'The design system for Nod: phosphor green on near-black, thin outlined panels, a dot-matrix display face for short labels and a legible monospace for everything you read. Inspired by monochrome smart-glasses HUDs. Source of truth: packages/design-tokens/tokens.json.',
+      'The design system for Nod. Gray monochrome in a dark and a light theme, with phosphor green kept for what must stand out: the logo, primary actions, live status, the waiting count and the undo countdown. Pixel effects (corner brackets, scanlines, glow) mark action items and interaction, never everything. Space Grotesk for reading, an original dot-matrix face for the clock and headings, pixel art for icons and illustrations. Source of truth: packages/design-tokens/tokens.json.',
     ),
   );
 }
 
 function colors() {
-  const swatches = Object.entries(TOKENS.color).map(([name, { value, use }]) =>
+  const rows = Object.entries(TOKENS.color).map(([name, { use }]) =>
     h(
-      'div',
-      { class: 'ds-swatch' },
-      h('span', { class: 'ds-chip', style: `background:${value}` }),
-      h('b', {}, `--color-${kebab(name)}`),
-      h('span', {}, value),
-      h('span', { class: 'dim' }, use),
-    ),
-  );
-  const row = ([fg, bg], min) => {
-    const r = ratio(hex(fg), hex(bg));
-    return h(
       'tr',
       {},
-      h(
-        'td',
-        {},
-        h('span', { style: `color:${hex(fg)};background:${hex(bg)};padding:2px 6px` }, 'Aa 09'),
-      ),
+      h('td', {}, h('b', {}, `--color-${kebab(name)}`)),
+      THEMES.map((t) => h('td', { class: 'ds-nowrap' }, chip(hex(name, t)), ` ${hex(name, t)}`)),
+      h('td', { class: 'ds-dim' }, use),
+    ),
+  );
+  const pair = ([fg, bg], min) =>
+    h(
+      'tr',
+      {},
       h('td', {}, `${fg} on ${bg}`),
-      h('td', {}, `${r.toFixed(2)}:1`),
-      h(
-        'td',
-        { class: r >= min ? 'ds-pass' : 'ds-fail' },
-        r >= min ? `pass ${min}:1` : `FAIL ${min}:1`,
-      ),
+      THEMES.map((t) => {
+        const r = ratio(hex(fg, t), hex(bg, t));
+        return h(
+          'td',
+          { class: 'ds-nowrap' },
+          h(
+            'span',
+            { class: 'ds-sample', style: `color:${hex(fg, t)};background:${hex(bg, t)}` },
+            'Aa 09',
+          ),
+          ` ${r.toFixed(2)}:1 `,
+          h('span', { class: r >= min ? 'ds-pass' : 'ds-fail' }, r >= min ? 'pass' : 'FAIL'),
+        );
+      }),
+      h('td', { class: 'ds-dim' }, `${min}:1`),
     );
-  };
-  const table = h(
-    'table',
-    { class: 'ds-table' },
+  const head = (...cols) =>
     h(
       'thead',
       {},
       h(
         'tr',
         {},
-        h('th', {}, 'Sample'),
-        h('th', {}, 'Pair'),
-        h('th', {}, 'Ratio'),
-        h('th', {}, 'WCAG'),
+        cols.map((c) => h('th', {}, c)),
       ),
-    ),
-    h(
-      'tbody',
-      {},
-      TOKENS.contrast.text.map((p) => row(p, 4.5)),
-      TOKENS.contrast.nonText.map((p) => row(p, 3)),
-    ),
-  );
+    );
   return section(
     'Color',
-    'contrast checked in CI',
-    h('div', { class: 'ds-grid' }, swatches),
-    h('h3', { class: 'label ds-caption', style: 'margin-top:24px' }, 'Contrast pairs'),
-    table,
+    'two themes · contrast checked in CI',
+    h('table', { class: 'ds-table' }, head('Token', ...THEMES, 'Use'), h('tbody', {}, rows)),
+    caption('Contrast pairs'),
+    h(
+      'table',
+      { class: 'ds-table' },
+      head('Pair', ...THEMES, 'Needs'),
+      h(
+        'tbody',
+        {},
+        TOKENS.contrast.text.map((p) => pair(p, 4.5)),
+        TOKENS.contrast.nonText.map((p) => pair(p, 3)),
+      ),
+    ),
   );
 }
 
@@ -128,48 +163,30 @@ function type() {
       h(
         'span',
         {
-          style: `font-size:${t.size}px;line-height:${t.lineHeight}px;font-weight:${t.weight};letter-spacing:${t.tracking}em;${t.case === 'upper' ? 'text-transform:uppercase;' : ''}${name === 'title' ? 'color:var(--color-phosphor)' : ''}`,
+          style: `font-size:${t.size}px;line-height:${t.lineHeight}px;font-weight:${t.weight};letter-spacing:${t.tracking}em;${t.case === 'upper' ? 'text-transform:uppercase;' : ''}`,
         },
         name === 'label'
           ? 'Changes something'
-          : 'Customers see the new job board tomorrow morning.',
+          : 'All 1,240 customers see the new job board tomorrow morning.',
       ),
     ),
   );
-  const pixels = h(
-    'div',
-    { class: 'ds-pixels' },
-    h(
-      'div',
-      {},
-      h('p', { class: 'label ds-caption' }, 'display x7 · matrix'),
-      pixelSvg('09:41', { scale: 7, dot: 0.78 }),
-    ),
-    h('div', {}, h('p', { class: 'label ds-caption' }, 'count x3'), pixelSvg('03', { scale: 3 })),
-    h(
-      'div',
-      {},
-      h('p', { class: 'label ds-caption' }, 'heading x2'),
-      pixelSvg('ABCDEFGHIJKLMNOPQRSTUVWXYZ', { scale: 2 }),
-    ),
-    h(
-      'div',
-      {},
-      h('p', { class: 'label ds-caption' }, 'heading x2'),
-      pixelSvg('0123456789 : . - / & ! ? >', { scale: 2 }),
-    ),
-  );
+  const sample = (label, text, opts) =>
+    h('div', {}, h('p', { class: 'label ds-caption' }, label), pixelSvg(text, opts));
   return section(
     'Type',
-    'monospace body · pixel 5x7 display',
-    h('p', { class: 'help ds-caption' }, `Body: ${TOKENS.font.body.value}`),
+    'Space Grotesk · Nod Pixel 5x7',
+    h('p', { class: 'help ds-caption' }, `${TOKENS.font.body.use} ${TOKENS.font.body.license}.`),
     h('div', { class: 'ds-type' }, rows),
+    caption('Nod Pixel 5x7 (original, display only)'),
     h(
-      'h3',
-      { class: 'label ds-caption', style: 'margin-top:24px' },
-      'Nod Pixel 5x7 (original, display only)',
+      'div',
+      { class: 'ds-pixels' },
+      sample('clock x7 · dot matrix', '09:41', { scale: 7, dot: 0.78 }),
+      sample('count x3', '03', { scale: 3 }),
+      sample('heading x2', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', { scale: 2 }),
+      sample('heading x2', '0123456789 : . , - / & ! ? # >', { scale: 2 }),
     ),
-    pixels,
   );
 }
 
@@ -194,15 +211,15 @@ function space() {
     h(
       'p',
       { class: 'help', style: 'margin-top:16px' },
-      `Borders ${TOKENS.border.hairline}px hairline, ${TOKENS.border.focus}px focus ring at ${TOKENS.border.focusOffset}px offset. Controls ${TOKENS.size.control}px tall (small ${TOKENS.size.controlSmall}px). Motion ${TOKENS.motion.fast}/${TOKENS.motion.base}/${TOKENS.motion.slow}ms, cosmetic only, removed under reduced motion.`,
+      `Borders ${TOKENS.border.hairline}px hairline, ${TOKENS.border.focus}px focus ring at ${TOKENS.border.focusOffset}px offset. Controls ${TOKENS.size.control}px tall (small ${TOKENS.size.controlSmall}px). Motion ${TOKENS.motion.fast}/${TOKENS.motion.base}/${TOKENS.motion.slow}ms, cosmetic only.`,
     ),
   );
 }
 
 function icons() {
   return section(
-    'Icons',
-    `${Object.keys(ICONS).length} icons · 12x12 grid · 12/24/48px`,
+    'Pixel art',
+    `${Object.keys(ICONS).length} icons on a 12x12 grid · two-ink illustrations`,
     h(
       'div',
       { class: 'ds-icons' },
@@ -216,45 +233,56 @@ function icons() {
         ),
       ),
     ),
-  );
-}
-
-function buttons() {
-  const states = ['', 'is-hover', 'is-pressed', 'is-focus'];
-  const names = ['default', 'hover', 'pressed', 'focus'];
-  const variant = (cls, text, ic) =>
-    h(
-      'div',
-      { class: 'ds-row' },
-      states.map((s, i) =>
-        h(
-          'button',
-          { class: `btn ${cls} ${s}`, type: 'button', title: names[i] },
-          icon(ic, 'sm'),
-          text,
+    caption('Illustrations'),
+    both(() =>
+      h(
+        'div',
+        { class: 'ds-row ds-illos' },
+        Object.entries(ILLUSTRATIONS).map(([name, { use, width }]) =>
+          h(
+            'figure',
+            {},
+            h('span', {
+              class: `illo illo-${name}`,
+              style: `width:${width * 4}px`,
+              'aria-hidden': 'true',
+            }),
+            h('figcaption', { class: 'help' }, use),
+          ),
         ),
       ),
-      h('button', { class: `btn ${cls}`, type: 'button', disabled: true }, icon(ic, 'sm'), text),
-    );
-  return section(
-    'Buttons',
-    'default · hover · pressed · focus · disabled',
-    h(
-      'div',
-      { class: 'ds-stack' },
-      variant('primary', 'Approve', 'check'),
-      variant('', 'Hold', 'close'),
-      variant('danger', 'Withdraw', 'close'),
-      variant('small', 'Undo', 'undo'),
     ),
   );
 }
 
-function demoCard({ urgent, title, question, tagList, live, hover }) {
+function hudBar(live) {
+  const clock = h('span', { class: 'clock' });
+  setPixelText(clock, '09:41', { scale: 2 });
+  return h(
+    'div',
+    { class: 'hud-bar ds-hud' },
+    pixel('span', 'NOD', { scale: 3 }, 'wordmark'),
+    h(
+      'div',
+      { class: 'hud-status' },
+      h(
+        'span',
+        { class: `conn${live ? ' live' : ''}` },
+        h('span', { class: 'conn-on' }, icon('live', 'sm'), 'Live'),
+        h('span', { class: 'conn-off' }, icon('offline', 'sm'), 'Offline'),
+      ),
+      clock,
+    ),
+  );
+}
+
+const tag = (cls, ic, text) => h('span', { class: `tag ${cls}` }, icon(ic, 'sm'), text);
+
+function demoCard({ urgent, needs, title, question, tagList, live, state = '' }) {
   return h(
     'div',
     {
-      class: `card link${urgent ? ' urgent' : ''}${hover ? ' is-hover' : ''}`,
+      class: `card link${urgent ? ' urgent' : ''}${needs ? ' needs-you' : ''} ${state}`,
       tabindex: '0',
       role: 'button',
     },
@@ -270,178 +298,245 @@ function demoCard({ urgent, title, question, tagList, live, hover }) {
   );
 }
 
-function cardsAndTags() {
-  const tag = (cls, ic, text) => h('span', { class: `tag ${cls}` }, icon(ic, 'sm'), text);
+function emphasis() {
+  const rule = (title, text) => h('li', {}, h('b', {}, title), ` ${text}`);
   return section(
-    'Decision cards & tags',
-    'list item',
+    'Emphasis',
+    'effects mark action, not everything',
     h(
-      'div',
-      { class: 'ds-row', style: 'margin-bottom:16px' },
-      tag('urgent', 'alert', 'Urgent'),
-      tag('external', 'mail', 'From external: x@example.com'),
-      tag('write', 'write', 'Changes something'),
-      tag('sending', 'check', 'Answered'),
-      tag('source', 'source', 'paperclip · cto'),
-    ),
-    h(
-      'div',
-      { class: 'list' },
-      demoCard({
-        urgent: true,
-        title: 'Reply to vendor quote',
-        question: 'Send the drafted reply accepting the new price?',
-        tagList: [
-          tag('urgent', 'alert', 'Urgent'),
-          tag('external', 'mail', 'From external: x@example.com'),
-          tag('source', 'source', 'email_triage · hermes'),
-        ],
-      }),
-      demoCard({
-        title: 'Ship the new job board?',
-        question: 'Publish the new job board to all customers?',
-        tagList: [
-          tag('write', 'write', 'Changes something'),
-          tag('source', 'source', 'paperclip · cto'),
-        ],
-        hover: true,
-      }),
-      demoCard({
-        title: 'Merge the billing fix',
-        question: 'Merge PR #412 so refunds stop double-charging?',
-        tagList: [tag('sending', 'check', 'Answered'), tag('source', 'source', 'github')],
-        live: 'Sending in 1:12',
-      }),
-    ),
-  );
-}
-
-function banners() {
-  const b = (kind, text, ic, extra) =>
-    h('div', { class: `banner ${kind}` }, h('span', {}, text), icon(ic), extra);
-  return section(
-    'Status & undo bar',
-    'toast with countdown',
-    h(
-      'div',
-      { class: 'ds-stack' },
-      b('undo', 'Sending in 1:12', 'clock', [
-        h('button', { class: 'btn small', type: 'button' }, icon('undo', 'sm'), 'Undo'),
-        h(
-          'div',
-          { class: 'meter', 'aria-hidden': 'true' },
-          h('div', { class: 'meter-fill', style: '--from: 0.6; --left: 0ms' }),
-        ),
-      ]),
-      b('sending', 'Sending…', 'send'),
-      b('done', 'Sent', 'check'),
-      b(
-        'held',
-        'Held: the service is in dry-run mode, so nothing was written to the source',
-        'alert',
+      'ul',
+      { class: 'help ds-rules' },
+      rule(
+        'Gray by default.',
+        'Informational panels, tags and secondary buttons are clean gray outlines.',
       ),
-      b('stale', 'Changed since you looked. Not sent.', 'stale'),
-      b('failed', 'Could not be delivered', 'close'),
-      h(
-        'div',
-        { class: 'mode' },
-        'Dry-run mode: answers are held and logged, not written to sources.',
+      rule(
+        'Green is for what must stand out:',
+        'logo, primary actions, live status, the waiting count, the undo countdown and the focus ring.',
       ),
-      h('p', { class: 'err' }, icon('alert', 'sm'), 'Request failed (503)'),
-    ),
-  );
-}
-
-function hud() {
-  const bar = (live) => {
-    const clock = h('span', { class: 'clock' });
-    setPixelText(clock, '09:41', { scale: 2 });
-    const mark = h('span', { class: 'wordmark' });
-    setPixelText(mark, 'NOD', { scale: 3 });
-    return h(
-      'div',
-      { class: 'hud-bar ds-hud' },
-      mark,
-      h(
-        'div',
-        { class: 'hud-status' },
-        h(
-          'span',
-          { class: `conn${live ? ' live' : ''}` },
-          h('span', { class: 'conn-on' }, icon('live', 'sm'), 'Live'),
-          h('span', { class: 'conn-off' }, icon('offline', 'sm'), 'Offline'),
-        ),
-        clock,
+      rule(
+        'Action items get corner brackets:',
+        'decisions that need an answer, the undo bar, sign-in. Primary buttons are the green fill.',
       ),
-    );
-  };
-  return section(
-    'Status bar',
-    'HUD · live and offline',
-    h('div', { class: 'ds-stack' }, bar(true), bar(false)),
-  );
-}
-
-function inputsAndMore() {
-  const evidence = h(
-    'details',
-    { class: 'evidence', open: true },
-    h(
-      'summary',
-      {},
-      icon('evidence', 'sm'),
-      h('span', {}, 'Technical evidence'),
-      h('span', { class: 'evidence-count' }, '2'),
-      icon('chevron-down', 'sm disclosure'),
-    ),
-    h(
-      'div',
-      { class: 'evidence-body' },
-      h('div', { class: 'evidence-item' }, h('a', { href: '#' }, 'Pull request #412')),
-      h(
-        'div',
-        { class: 'evidence-item' },
-        h('span', { class: 'evidence-label' }, 'Diff summary'),
-        h('pre', {}, 'refunds.ts: guard against a second capture\n+12 −3 lines'),
+      rule(
+        'Interaction adds texture:',
+        'hover and keyboard focus add scanlines and brackets instead of a solid fill.',
+      ),
+      rule(
+        'Reduced motion or more contrast:',
+        'scanlines and glow switch off; hover falls back to a plain fill.',
       ),
     ),
-  );
-  const empty = h(
-    'div',
-    { class: 'empty' },
-    icon('inbox', 'lg'),
-    h('p', { class: 'pixel-heading' }),
-    h('p', {}, 'Nothing is waiting on you.'),
-  );
-  setPixelText(empty.children[1], 'All clear', { scale: 2 });
-  return section(
-    'Inputs, disclosure, empty state',
-    '',
-    h(
-      'div',
-      { class: 'ds-cols' },
+    both(() =>
       h(
         'div',
         { class: 'ds-stack' },
-        h('label', { class: 'label', for: 'ds-token' }, 'Device token'),
-        h('input', { id: 'ds-token', type: 'password', placeholder: 'Device token' }),
-        h('label', { class: 'label', for: 'ds-bad' }, 'Invalid'),
-        h('input', { id: 'ds-bad', type: 'text', value: 'not-a-token', 'aria-invalid': 'true' }),
-        h('label', { class: 'label', for: 'ds-other' }, icon('other', 'sm'), 'Other'),
-        h('textarea', {
-          id: 'ds-other',
-          rows: 2,
-          placeholder: 'Other: tell the agent what to do instead',
+        h(
+          'div',
+          { class: 'panel' },
+          h('p', { class: 'label' }, 'Plain panel'),
+          h('p', {}, 'Information only. No brackets, no green.'),
+        ),
+        h(
+          'div',
+          { class: 'panel emph' },
+          h('p', { class: 'label' }, 'Action panel'),
+          h('p', {}, 'Needs an answer: accent corner brackets.'),
+        ),
+        demoCard({
+          title: 'Answered: merge the billing fix',
+          question: 'Waiting on the undo window. Plain card.',
+          tagList: [tag('sending', 'check', 'Answered'), tag('source', 'source', 'github')],
+          live: 'Sending in 1:12',
         }),
-        h('div', { class: 'panel' }, evidence),
+        demoCard({
+          needs: true,
+          title: 'Ship the new job board?',
+          question: 'Needs you: brackets.',
+          tagList: [
+            tag('write', 'write', 'Changes something'),
+            tag('source', 'source', 'paperclip · cto'),
+          ],
+        }),
+        demoCard({
+          needs: true,
+          state: 'is-hover',
+          title: 'Ship the new job board?',
+          question: 'Hover or focus: scanlines.',
+          tagList: [tag('source', 'source', 'paperclip · cto')],
+        }),
+        demoCard({
+          needs: true,
+          urgent: true,
+          title: 'Reply to Acme Print quote',
+          question: 'Urgent and needs you: red brackets and edge.',
+          tagList: [
+            tag('urgent', 'alert', 'Urgent'),
+            tag('external', 'mail', 'From external: x@example.com'),
+          ],
+        }),
       ),
-      empty,
     ),
   );
 }
 
+function components() {
+  const states = ['', 'is-hover', 'is-pressed', 'is-focus'];
+  const names = ['default', 'hover', 'pressed', 'focus'];
+  const variant = (cls, text, ic) =>
+    h(
+      'div',
+      { class: 'ds-row' },
+      states.map((s, i) =>
+        h(
+          'button',
+          { class: `btn ${cls} ${s}`, type: 'button', title: names[i] },
+          icon(ic, 'sm'),
+          h('span', {}, text),
+        ),
+      ),
+      h(
+        'button',
+        { class: `btn ${cls}`, type: 'button', disabled: true },
+        icon(ic, 'sm'),
+        h('span', {}, text),
+      ),
+    );
+  const banner = (kind, text, ic, extra) =>
+    h('div', { class: `banner ${kind}` }, h('span', {}, text), icon(ic), extra);
+  return [
+    section(
+      'Status bar',
+      'HUD · live and offline',
+      both(() => h('div', { class: 'ds-stack' }, hudBar(true), hudBar(false))),
+    ),
+    section(
+      'Buttons',
+      'default · hover · pressed · focus · disabled',
+      both(() =>
+        h(
+          'div',
+          { class: 'ds-stack' },
+          variant('primary', 'Approve', 'check'),
+          variant('', 'Hold', 'close'),
+          variant('danger', 'Withdraw', 'close'),
+          variant('small', 'Undo', 'undo'),
+        ),
+      ),
+    ),
+    section(
+      'Tags',
+      'badges',
+      both(() =>
+        h(
+          'div',
+          { class: 'ds-row' },
+          tag('urgent', 'alert', 'Urgent'),
+          tag('external', 'mail', 'From external: x@example.com'),
+          tag('write', 'write', 'Changes something'),
+          tag('sending', 'check', 'Answered'),
+          tag('source', 'source', 'paperclip · cto'),
+        ),
+      ),
+    ),
+    section(
+      'Status & undo bar',
+      'the undo bar is an action item',
+      both(() =>
+        h(
+          'div',
+          { class: 'ds-stack' },
+          banner('undo', 'Sending in 1:12', 'clock', [
+            h(
+              'button',
+              { class: 'btn small', type: 'button' },
+              icon('undo', 'sm'),
+              h('span', {}, 'Undo'),
+            ),
+            h(
+              'div',
+              { class: 'meter', 'aria-hidden': 'true' },
+              h('div', { class: 'meter-fill', style: '--from: 0.6; --left: 0ms' }),
+            ),
+          ]),
+          banner('sending', 'Sending…', 'send'),
+          banner('done', 'Sent', 'check'),
+          banner(
+            'held',
+            'Held: the service is in dry-run mode, so nothing was written to the source',
+            'alert',
+          ),
+          banner('stale', 'Changed since you looked. Not sent.', 'stale'),
+          banner('failed', 'Could not be delivered', 'close'),
+          h(
+            'div',
+            { class: 'mode' },
+            'Dry-run mode: answers are held and logged, not written to sources.',
+          ),
+          h('p', { class: 'err' }, icon('alert', 'sm'), 'Request failed (503)'),
+        ),
+      ),
+    ),
+    section(
+      'Inputs, disclosure, empty state',
+      '',
+      both(() => {
+        const id = Math.random().toString(36).slice(2, 7);
+        const empty = h(
+          'div',
+          { class: 'empty' },
+          illo('empty'),
+          pixel('p', 'All clear'),
+          h('p', {}, 'Nothing is waiting on you.'),
+        );
+        return h(
+          'div',
+          { class: 'ds-stack' },
+          h('label', { class: 'label', for: `t-${id}` }, 'Device token'),
+          h('input', { id: `t-${id}`, type: 'password', placeholder: 'Device token' }),
+          h('label', { class: 'label', for: `b-${id}` }, 'Invalid'),
+          h('input', { id: `b-${id}`, type: 'text', value: 'not-a-token', 'aria-invalid': 'true' }),
+          h('label', { class: 'label', for: `o-${id}` }, icon('other', 'sm'), 'Other'),
+          h('textarea', {
+            id: `o-${id}`,
+            rows: 2,
+            placeholder: 'Other: tell the agent what to do instead',
+          }),
+          h(
+            'div',
+            { class: 'panel' },
+            h(
+              'details',
+              { class: 'evidence', open: true },
+              h(
+                'summary',
+                {},
+                icon('evidence', 'sm'),
+                h('span', {}, 'Technical evidence'),
+                h('span', { class: 'evidence-count' }, '2'),
+                icon('chevron-down', 'sm disclosure'),
+              ),
+              h(
+                'div',
+                { class: 'evidence-body' },
+                h('div', { class: 'evidence-item' }, h('a', { href: '#' }, 'Pull request #412')),
+                h(
+                  'div',
+                  { class: 'evidence-item' },
+                  h('span', { class: 'evidence-label' }, 'Diff summary'),
+                  h('pre', {}, 'refunds.ts: guard against a second capture\n+12 −3 lines'),
+                ),
+              ),
+            ),
+          ),
+          empty,
+        );
+      }),
+    ),
+  ];
+}
+
 function glasses() {
-  const levels = Object.entries(TOKENS.glasses.level);
   return section(
     'Glasses mapping',
     `${TOKENS.glasses.display.width}x${TOKENS.glasses.display.height} ${TOKENS.glasses.display.color}`,
@@ -452,32 +547,27 @@ function glasses() {
       h(
         'thead',
         {},
-        h('tr', {}, h('th', {}, 'Token'), h('th', {}, 'Web'), h('th', {}, 'Glasses level 0-15')),
+        h(
+          'tr',
+          {},
+          h('th', {}, 'Token'),
+          h('th', {}, 'Web (dark)'),
+          h('th', {}, 'Glasses level 0-15'),
+        ),
       ),
       h(
         'tbody',
         {},
-        levels.map(([name, level]) =>
+        Object.entries(TOKENS.glasses.level).map(([name, level]) =>
           h(
             'tr',
             {},
             h('td', {}, name),
+            h('td', { class: 'ds-nowrap' }, chip(hex(name, 'dark')), ` ${hex(name, 'dark')}`),
             h(
               'td',
-              {},
-              h('span', {
-                class: 'ds-chip',
-                style: `display:inline-block;width:16px;height:16px;vertical-align:middle;background:${hex(name)}`,
-              }),
-              ` ${hex(name)}`,
-            ),
-            h(
-              'td',
-              {},
-              h('span', {
-                class: 'ds-chip',
-                style: `display:inline-block;width:16px;height:16px;vertical-align:middle;background:rgb(93 255 138 / ${(level / 15).toFixed(2)})`,
-              }),
+              { class: 'ds-nowrap' },
+              chip(`rgb(93 255 138 / ${(level / 15).toFixed(2)})`),
               ` ${level}`,
             ),
           ),
@@ -498,14 +588,11 @@ document
   .getElementById('ds')
   .replaceChildren(
     intro(),
+    emphasis(),
     colors(),
     type(),
     space(),
     icons(),
-    hud(),
-    buttons(),
-    cardsAndTags(),
-    banners(),
-    inputsAndMore(),
+    ...components(),
     glasses(),
   );

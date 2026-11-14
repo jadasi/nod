@@ -1,6 +1,6 @@
 // Caches the app shell so the inbox opens instantly. API calls are never cached:
 // a stale decision shown as current would defeat the point.
-const SHELL = 'nod-shell-v2';
+const SHELL = 'nod-shell-v3';
 const FILES = [
   '/',
   '/app.js',
@@ -8,6 +8,9 @@ const FILES = [
   '/pixel.js',
   '/tokens.js',
   '/tokens.css',
+  '/theme.js',
+  '/fonts/space-grotesk-latin-wght-normal.woff2',
+  '/fonts/space-grotesk-latin-ext-wght-normal.woff2',
   '/style.css',
   '/manifest.webmanifest',
   '/icon.svg',
