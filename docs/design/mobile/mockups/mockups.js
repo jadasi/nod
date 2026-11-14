@@ -113,22 +113,66 @@ function appbar({ live = true, glasses = true, title, back = false } = {}) {
   );
 }
 
-function bottomnav(active = 'inbox', { inbox = 5, stale = 3 } = {}) {
-  const tab = (id, name, ic, badge, warn) =>
+// Three tabs. Inbox carries two badges: green = decisions that need you, amber = items that need
+// attention (changed since you looked, failed delivery, queued behind a lock, agent stopped).
+function bottomnav(active = 'inbox', { inbox = 4, attn = 3 } = {}) {
+  const tab = (id, name, ic, badges = []) =>
     h(
       'a',
       { class: id === active ? 'active' : '' },
       icon(ic),
       name,
-      badge ? h('span', { class: `navbadge${warn ? ' warn' : ''}` }, String(badge)) : null,
+      badges.length > 0 &&
+        h(
+          'span',
+          { class: 'navbadges' },
+          badges.map(([n, warn]) => h('span', { class: `navbadge${warn ? ' warn' : ''}` }, String(n))),
+        ),
     );
+  const ib = [];
+  if (inbox) ib.push([inbox, false]);
+  if (attn) ib.push([attn, true]);
   return h(
     'nav',
     { class: 'bottomnav' },
-    tab('inbox', 'Inbox', 'inbox', inbox),
-    tab('stale', 'Stale', 'stale', stale, true),
+    tab('inbox', 'Inbox', 'inbox', ib),
     tab('updates', 'Updates', 'updates'),
     tab('settings', 'Settings', 'gear'),
+  );
+}
+
+/** Filter chips at the top of Inbox. */
+function chips(active = 'all', { all = 8, you = 4, attn = 3 } = {}) {
+  const chip = (id, text, n, warn) =>
+    h(
+      'span',
+      { class: `chip${id === active ? ' on' : ''}${warn ? ' warn' : ''}` },
+      warn && icon('stale', 'sm'),
+      text,
+      h('span', { class: 'chip-n' }, String(n)),
+    );
+  return h(
+    'div',
+    { class: 'chips' },
+    chip('all', 'All', all),
+    chip('you', 'Needs you', you),
+    attn > 0 && chip('attn', 'Attention', attn, true),
+  );
+}
+
+/** One amber row above the decisions: what needs repair, one tap to the Attention filter. */
+function attentionStrip() {
+  return h(
+    'div',
+    { class: 'attn-strip' },
+    icon('stale', 'sm'),
+    h(
+      'div',
+      { class: 'grow' },
+      h('b', {}, '3 need attention'),
+      h('small', {}, 'Changed since you looked · delivery failed · queued'),
+    ),
+    h('span', { class: 'attn-go' }, 'Review', icon('chevron-right', 'sm')),
   );
 }
 
@@ -233,13 +277,15 @@ function inbox(theme) {
         pixel('INBOX'),
         h('span', { class: 'label' }, '4 need you · 1 sending'),
       ),
+      chips('all'),
+      attentionStrip(),
       card(D.refund),
       card(D.acme),
       card(D.jobs),
       card(D.pricing, { answered: true, live: 'Sending "Merge" in 1:47' }),
       card(D.writer),
     ),
-    bottomnav('inbox', { inbox: 4 }),
+    bottomnav('inbox'),
     gesture(),
   );
 }
@@ -419,7 +465,8 @@ function staleCard(d, kind, text, ic, actions, extra) {
   );
 }
 
-function stale(theme) {
+// Inbox filtered to Attention (was the Stale tab before 2026-11-14).
+function attention(theme) {
   return phone(
     theme,
     sysbar(),
@@ -430,9 +477,10 @@ function stale(theme) {
       h(
         'div',
         { class: 'sec' },
-        pixel('STALE'),
-        h('span', { class: 'label' }, 'Stale & conflicts · 3'),
+        pixel('INBOX'),
+        h('span', { class: 'label' }, 'Showing attention · 3'),
       ),
+      chips('attn'),
       staleCard(
         D.jobs,
         'stale',
@@ -464,7 +512,7 @@ function stale(theme) {
         'Both act on env:billing. Opens when that one is done.',
       ),
     ),
-    bottomnav('stale', { inbox: 4 }),
+    bottomnav('inbox'),
     gesture(),
   );
 }
@@ -505,7 +553,7 @@ function updates(theme) {
         item('evidence', 'Overnight digest', '3 decisions waited overnight; 1 ran its default.', 'Nod · 8:00 am'),
       ),
     ),
-    bottomnav('updates', { inbox: 2, stale: 0 }),
+    bottomnav('updates', { inbox: 2, attn: 0 }),
     gesture(),
   );
 }
@@ -558,7 +606,7 @@ function settings(theme) {
         row('power', 'Delivery mode', 'Server kill switch · read-only here', val('Live')),
       ),
     ),
-    bottomnav('settings', { inbox: 4 }),
+    bottomnav('settings'),
     gesture(),
   );
 }
@@ -620,8 +668,7 @@ function onboarding(theme) {
         ),
         qr(),
         h('span', { class: 'btn primary' }, icon('key', 'sm'), 'Scan pairing code'),
-        h('span', { class: 'btn' }, 'Paste a device token instead'),
-        h('span', { class: 'tag proposal' }, 'Proposal: QR pairing needs a core endpoint'),
+        h('span', { class: 'btn' }, 'No camera? Paste a device token'),
       ),
     ),
     gesture(),
@@ -651,7 +698,7 @@ function empty(theme) {
         h('span', { class: 'btn small' }, icon('updates', 'sm'), 'See today’s updates'),
       ),
     ),
-    bottomnav('inbox', { inbox: 0, stale: 0 }),
+    bottomnav('inbox', { inbox: 0, attn: 0 }),
     gesture(),
   );
 }
@@ -677,7 +724,7 @@ function offline(theme) {
       ),
       h('div', { class: 'dimmed' }, card(D.refund), card(D.acme), card(D.jobs)),
     ),
-    bottomnav('inbox', { inbox: 4 }),
+    bottomnav('inbox'),
     gesture(),
   );
 }
@@ -914,14 +961,14 @@ function call(theme) {
 // ------------------------------------------------------------------ registry
 
 export const SCREENS = [
-  ['inbox', 'Inbox', 'Urgent first; brackets mark cards that need you.', inbox, ['dark', 'light']],
+  ['inbox', 'Inbox', 'Filter chips and an amber attention row; urgent first.', inbox, ['dark', 'light']],
   ['detail', 'Decision detail', 'Impact first; green is the recommended option.', detail, ['dark', 'light']],
   ['undo', 'Undo window', 'Answer held 2 min; the bar drains, Undo stays in reach.', undo, ['dark', 'light']],
   ['external', 'External: explicit approval', 'Outside provenance: no default, confirm sheet before it sends.', external, ['dark']],
-  ['stale', 'Stale & conflicts', 'Changed since you looked, failed delivery, queued behind a lock.', stale, ['dark']],
+  ['attention', 'Inbox: attention filter', 'Changed since you looked, failed delivery, queued behind a lock.', attention, ['dark']],
   ['updates', 'Updates', '2-hour sweep summary and history.', updates, ['dark']],
   ['settings', 'Settings', 'Pairing, theme, channels, hours, glasses, Call Me.', settings, ['dark']],
-  ['onboarding', 'Pairing (proposal)', 'QR from the desk app, or paste a token.', onboarding, ['dark']],
+  ['onboarding', 'Pairing', 'Scan the QR from desk Settings; token paste as fallback.', onboarding, ['dark']],
   ['empty', 'Empty + quiet hours', 'All clear at night; the digest waits for 8 am.', empty, ['dark']],
   ['offline', 'Offline', 'Read-only cache; answering waits for the server.', offline, ['dark']],
   ['shade', 'Notification shade', 'Urgent with option actions, Undo, external opens only.', shade, ['dark', 'light']],

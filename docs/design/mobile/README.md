@@ -3,7 +3,8 @@
 Design reference for the phase 2 Android app (Expo, see `docs/HANDOFF.md` §2 and §7). It covers the app layout, navigation, every screen and its states, notifications, the glasses handoff and Call Me. The static mockups in `mockups/` use the real design tokens, fonts, icons and web components. **Nothing in this folder ships.**
 
 - **Settled** means it is already decided in `docs/HANDOFF.md`, the decision contract or the `add-decision-loop` specs. This doc does not re-decide those things.
-- **Proposal** means a layout or interaction choice made here for David to confirm. Each one is marked _Proposal_ and repeated under [Open questions](#open-questions-for-david).
+- **Decided** means David chose it after the first draft of this doc (2026-11-14). See [Decided](#decided-by-david-2026-11-14).
+- **Proposal** means a layout or interaction choice made here for David to confirm. Each one is marked _Proposal_; the bigger ones are repeated under [Open questions](#open-questions-for-david).
 
 ## Contents
 
@@ -12,11 +13,11 @@ Design reference for the phase 2 Android app (Expo, see `docs/HANDOFF.md` §2 an
 3. [Screens and states](#screens-and-states)
 4. [Answer, undo, delivered](#answer-undo-delivered)
 5. [Notifications](#notifications)
-6. [Quiet hours, offline, stale](#quiet-hours-offline-stale)
+6. [Quiet hours, offline, attention](#quiet-hours-offline-attention)
 7. [Phone and Even G2 handoff](#phone-and-even-g2-handoff)
 8. [Call Me](#call-me)
 9. [Flow diagram](#flow-diagram)
-10. [Open questions for David](#open-questions-for-david)
+10. [Decided, and open questions for David](#decided-by-david-2026-11-14)
 11. [Component and token mapping](#component-and-token-mapping)
 12. [Mockups and screenshots](#mockups-and-screenshots)
 
@@ -43,22 +44,22 @@ Most of these carry over from the web inbox (`apps/web/public/style.css`, `desig
 │  tab content (scrolls)       │
 │                              │
 ├──────────────────────────────┤
-│ Inbox  Stale  Updates  Sett. │  bottom navigation, 4 tabs, labels always on
+│  Inbox    Updates  Settings  │  bottom navigation, 3 tabs, labels always on
 ├──────────────────────────────┤
 │ gesture bar                  │
 └──────────────────────────────┘
 ```
 
-**Tabs plus a stack.** _Proposal._
+**Three tabs plus a stack.** _Decided (tab set, 2026-11-14); the rest is Proposal._
 
-| Level            | What                                                                                                                                                | Why                                                                                                                                                                                |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Bottom tabs (4)  | **Inbox**, **Stale** (Stale & conflicts), **Updates**, **Settings**                                                                                 | The first three are the queues the web inbox already has (inbox, repair, updates). Settings is a tab because pairing, theme, channels and glasses state get checked often at first. |
-| Stack screens    | **Decision detail**, **Confirm sheet** (external writes), **In-call**, **Pairing**                                                                   | Opening a decision pushes onto the stack. Back, or the system back gesture, returns to the same scroll position in the list.                                                     |
-| App bar actions  | Connection (LIVE or OFFLINE), glasses state (icon only when paired), **Call Me** (a square button, always one tap away)                             | Call Me with no decision open starts **task-creation mode** (HANDOFF §6).                                                                                                          |
-| Deep links       | `nod://decision/<id>` from notifications, the glasses ("open on phone") and Call Me                                                                 | A notification tap always lands on the detail screen, never on the list.                                                                                                           |
+| Level           | What                                                                                                                    | Why                                                                                                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bottom tabs (3) | **Inbox** (decisions, plus the items that need attention), **Updates**, **Settings**                                    | Stale & conflicts lives inside Inbox (decided 2026-11-14), so everything David has to act on is in one place. Settings is a tab because pairing, theme, channels and glasses state get checked often at first. |
+| Stack screens   | **Decision detail**, **Confirm sheet** (external writes), **In-call**, **Pairing**                                      | Opening a decision pushes onto the stack. Back, or the system back gesture, returns to the same scroll position in the list.                                                                                   |
+| App bar actions | Connection (LIVE or OFFLINE), glasses state (icon only when paired), **Call Me** (a square button, always one tap away) | Call Me with no decision open starts **task-creation mode** (HANDOFF §6).                                                                                                                                      |
+| Deep links      | `nod://decision/<id>` from notifications, the glasses ("open on phone") and Call Me                                     | A notification tap always lands on the detail screen, never on the list.                                                                                                                                       |
 
-Badges: Inbox shows how many decisions need David (green). Stale shows how many items need repair (amber). Updates and Settings have no badge, so the badges never turn into noise.
+Badges: the Inbox tab carries two. Green is how many decisions need David. Amber, next to it, is how many items need attention (repair). The amber count stays visible from every tab, so a failed delivery is never hidden behind a filter. Updates and Settings have no badge, so the badges never turn into noise.
 
 ## Screens and states
 
@@ -68,8 +69,11 @@ Every screen exists in dark and light. Theme follows the system by default, with
 
 - **Content:** decisions that need an answer, then answered ones still in their undo window. Order follows the web `sortInbox`: urgent first, then oldest deadline. _Settled ordering._
 - **Card:** tags (Urgent, From external, Answered, source system · agent), glance title (≤ 48 chars), question (≤ 120 chars), and a live line ("Sending "Merge" in 1:47") while an answer is in its undo window. No options on the card: the list is for triage, and the detail is where David answers. _Proposal._
+- **Filter chips** under the heading: **All**, **Needs you**, and an amber **Attention** chip (only when there is something to repair). _Proposal, following the 2026-11-14 decision._
+- **Attention row:** when anything needs repair, one amber row sits above the decisions: "3 need attention · Changed since you looked · delivery failed · queued", with **Review**, which selects the Attention chip. Attention items don't mix into the decision list, because they need a different kind of action (repair, not a choice). _Proposal._
 - **States:**
-  - normal list
+  - normal list, with or without the attention row
+  - **Attention filter**: only repair items (next section)
   - empty: the "All clear" illustration, with the next digest time
   - quiet hours: a strip above the list, "Quiet hours until 8:00 am. Only urgent decisions alert you."
   - offline: a red banner, cached cards dimmed, answering disabled
@@ -97,17 +101,17 @@ States: open, answered (undo), sending, delivered, held, changed since you looke
 - **No green option.** The recommendation is still marked with ★, but every option stays outlined, so the eye doesn't land on a pre-picked answer. _Proposal._
 - Tapping an option opens a **confirm sheet**: the option, the recipient, a preview of what will be sent (when the source supplies one as evidence), then Cancel and a green **Send reply**. The 2-minute undo still applies after this. _Proposal._
 
-### Stale & conflicts (tab)
+### Inbox: Attention filter (was the Stale tab)
 
-One card per problem, each with its banner and the repair actions from HANDOFF §5.9:
+The HANDOFF §5.9 "Stale & conflicts" queue, shown as an Inbox filter. One card per problem, each with an amber left edge, its banner and its repair actions:
 
-| Problem                                     | Banner                                                                 | Actions                       |
-| ------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------- |
-| Changed since you looked (fingerprint moved) | red `stale` banner: "Changed since you looked: QA now 47/47"           | Re-ask, Withdraw              |
-| Delivery failed                             | red `failed` banner with the source's reason; "Tried 3 times"          | Retry, Force refresh          |
-| Queued behind a resource lock               | amber `held` banner: "Queued behind the refund migration"              | Open (read-only until free)   |
-| Agent stopped (TTL expired)                 | gray: "Agent stopped 12 min ago"                                      | Withdraw, Re-ask              |
-| Resolved outside Nod                        | gray: "Resolved outside Nod"                                          | Dismiss                       |
+| Problem                                      | Banner                                                        | Actions                     |
+| -------------------------------------------- | ------------------------------------------------------------- | --------------------------- |
+| Changed since you looked (fingerprint moved) | red `stale` banner: "Changed since you looked: QA now 47/47"  | Re-ask, Withdraw            |
+| Delivery failed                              | red `failed` banner with the source's reason; "Tried 3 times" | Retry, Force refresh        |
+| Queued behind a resource lock                | amber `held` banner: "Queued behind the refund migration"     | Open (read-only until free) |
+| Agent stopped (TTL expired)                  | gray: "Agent stopped 12 min ago"                              | Withdraw, Re-ask            |
+| Resolved outside Nod                         | gray: "Resolved outside Nod"                                  | Dismiss                     |
 
 ### Updates (tab)
 
@@ -116,21 +120,29 @@ One card per problem, each with its banner and the repair actions from HANDOFF �
 
 ### Settings (tab)
 
-| Group           | Rows                                                                                                                                                         |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| This phone      | Paired with nod-core (device name, last four characters of the token, Re-pair, Sign out). Theme: System / Light / Dark.                                      |
-| Notifications   | One row per channel (below), each opening the Android channel settings. **Open hours**: "8:00 am – 8:00 pm Phoenix · set on server", read-only.           |
-| Devices & voice | **Even G2 glasses** (connected, R1 ring paired, Pair or Forget). **Call Me** (on or off, open hours only, spend this month against the hard cap).          |
-| Delivery        | **Delivery mode**: Live or Dry run, read-only, mirrors `NOD_DELIVERY_MODE`. When it's dry run, a gray strip shows on every screen.                          |
+| Group           | Rows                                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| This phone      | Paired with nod-core (device name, last four characters of the token, Re-pair, Sign out). Theme: System / Light / Dark.                           |
+| Notifications   | One row per channel (below), each opening the Android channel settings. **Open hours**: "8:00 am – 8:00 pm Phoenix · set on server", read-only.   |
+| Devices & voice | **Even G2 glasses** (connected, R1 ring paired, Pair or Forget). **Call Me** (on or off, open hours only, spend this month against the hard cap). |
+| Delivery        | **Delivery mode**: Live or Dry run, read-only, mirrors `NOD_DELIVERY_MODE`. When it's dry run, a gray strip shows on every screen.                |
 
 The per-type undo delay is set on the server. It shows read-only in the decision detail as the length of the undo bar. _Proposal: no editing on the phone in phase 2._
 
 ### Pairing / sign-in (first run)
 
-_Proposal._ Pairing works in two ways:
+_Decided (David, 2026-11-14):_ **QR is the primary path; token paste is the fallback.**
 
-- **Scan a QR code** that the desk web app shows. This needs a pairing endpoint in core, which the phase 1 contract doesn't have.
-- **Paste a device token.** This works today, with the same `NOD_DEVICE_TOKEN` flow as the web sign-in.
+- **Scan a QR code** that the desk web app shows. **This needs a new core pairing endpoint, to be built in a later PR.** Phase 1 core doesn't have one.
+- **Paste a device token** ("No camera? Paste a device token"). This works today, with the same `NOD_DEVICE_TOKEN` flow as the web sign-in.
+
+Intended flow (the API is not designed here):
+
+1. On the desk, David opens the web app → **Settings → Pair a phone**. The web app, already signed in, asks core for a short-lived, single-use pairing code and shows it as a QR.
+2. The phone app scans the QR and sends the code to core.
+3. Core issues a new device token for this phone and returns it. The phone stores it. The desk page shows "Paired: Pixel 9" and the code expires.
+
+Open details for the endpoint PR: code lifetime, one token per device (so one phone can be revoked alone), and how revocation shows in Settings.
 
 The screen uses the sign-in illustration, a numbered two-step guide, and a decorative QR in a bracketed frame. The token is kept in Android's encrypted storage (expo-secure-store).
 
@@ -146,7 +158,7 @@ _Settled behavior; this section only describes how it looks._
 2. The list card shows "Sending "Merge" in 1:47" in green, and the notification turns into a **Sending** notification with a progress bar and one **Undo** action.
 3. When the window ends, core re-checks the source:
    - unchanged: **Sending**, then **Delivered** (a check banner, then the item moves to Updates)
-   - changed: **Changed since you looked**, and the item moves to Stale
+   - changed: **Changed since you looked**, and the item moves to Inbox → Attention
 4. **Undo** returns the decision to open with the same options. Undo is never more than one tap away while the bar is visible, on the phone, in the notification, and on the glasses (double tap).
 
 ## Notifications
@@ -155,26 +167,26 @@ _Settled behavior; this section only describes how it looks._
 
 _Proposal._ Android channels are user-tunable, so Nod uses few, with clear purposes:
 
-| Channel             | Importance                      | Used for                                                                 | Hours                      |
-| ------------------- | ------------------------------- | ------------------------------------------------------------------------ | -------------------------- |
-| **Urgent**          | High: heads-up, sound, vibrate  | `urgency: urgent`; bypasses cooldown                                     | Any hour (settled)         |
-| **Decisions**       | Default; quieter when batched   | Everything else that needs an answer. The first alerts, the rest batch under cooldown (settled). | Open hours; then the digest |
-| **Sending**         | Low, ongoing                    | The undo window: progress plus Undo                                      | Any hour                   |
-| **Updates & digest** | Low, silent                     | Sweep summaries, the 8:00 am digest and the end-of-day digest            | Open hours                 |
-| **Delivery problems** | Default                        | Failed delivery, changed since you looked, agent stopped                 | Open hours                 |
+| Channel               | Importance                     | Used for                                                                                         | Hours                       |
+| --------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------ | --------------------------- |
+| **Urgent**            | High: heads-up, sound, vibrate | `urgency: urgent`; bypasses cooldown                                                             | Any hour (settled)          |
+| **Decisions**         | Default; quieter when batched  | Everything else that needs an answer. The first alerts, the rest batch under cooldown (settled). | Open hours; then the digest |
+| **Sending**           | Low, ongoing                   | The undo window: progress plus Undo                                                              | Any hour                    |
+| **Updates & digest**  | Low, silent                    | Sweep summaries, the 8:00 am digest and the end-of-day digest                                    | Open hours                  |
+| **Delivery problems** | Default                        | Failed delivery, changed since you looked, agent stopped                                         | Open hours                  |
 
 ### Content and actions
 
 - **Title** = glance title. **Text** = the question, or the default ("If you say nothing: Run tonight, in 18 min").
-- **Inline actions** (Android allows up to 3): the option labels (≤ 20 chars, so they fit), with the recommended one first, then **Open**. _Proposal:_ inline answers only for **internal** decisions with **≤ 2 options shown inline** plus Open. A decision with more options shows the top two and Open.
+- **One-tap answers for internal decisions.** _Decided (David, 2026-11-14)._ Android allows up to 3 actions: the top 2 options (the recommended one first; labels are ≤ 20 chars, so they fit), then **Open**. A decision with more options still shows the top two and Open.
 - **External provenance: no inline answer.** The only action is **Review in Nod**, which opens the detail. The text says why ("Every option sends an email, so answer it in Nod."). _Settled rule._
-- **Inline answer → undo.** An inline tap answers right away, and the notification becomes a **Sending** notification with Undo, the same 2-minute window. _Settled window; Proposal presentation._
+- **Inline answer → undo.** _Decided._ An inline tap answers right away, and the notification turns into a **Sending** notification with a progress bar and **Undo**, the same 2-minute window.
 - **Grouping:** batched decisions collapse into one summary ("2 more decisions") in the Decisions channel.
-- **Lock screen:** title and text are visible (the visibility is "public": the content is David's own and impact-first). Actions show, but answering asks for unlock (`authenticationRequired`), because the phone lock is the gate. _Proposal; see the open questions._
+- **Lock screen:** title and text are visible (the visibility is "public": the content is David's own and impact-first). Actions show, but answering asks for unlock (`authenticationRequired`), because the phone lock is the gate. _Still open; see the open questions._
 - **Heads-up:** only the Urgent channel pops over other apps.
 - **Wear OS:** the same notification and actions bridge to the watch. No extra watch UI in phase 2. _Settled scope._
 
-## Quiet hours, offline, stale
+## Quiet hours, offline, attention
 
 - **Quiet hours** (8 pm–8 am Phoenix, set on the server): non-urgent decisions don't notify. The Inbox shows the quiet strip, default countdowns read "paused until 8:00 am", and Call Me is disabled with the reason ("Calls are open 8 am–8 pm"). _Settled behavior._
 - **Offline:** the app keeps the last list it had (TanStack Query cache) and marks it with a red OFFLINE marker and banner: "Offline since 9:38. Showing what you had then." **Answering is disabled offline**, because the undo clock and the source check run on the server. _Proposal; queueing answers offline is an open question._
@@ -225,46 +237,52 @@ flowchart TD
   UNDO[Undo window: Sending in 1:47] -- Undo --> IN
   UNDO -- window ends --> RV{Source unchanged?}
   RV -- yes --> DEL[Delivered] --> U
-  RV -- no --> ST[Stale & conflicts:<br/>re-ask / withdraw / refresh]
+  RV -- no --> ST[Inbox, Attention filter:<br/>re-ask / withdraw / refresh]
   ST -- re-ask --> IN
 ```
 
 The "silence until deadline" path never applies to external writes: the contract forbids defaults that write for external provenance.
 
+## Decided by David (2026-11-14)
+
+1. **Navigation: Stale folds into Inbox.** Three tabs: Inbox · Updates · Settings. Repair items show as an amber attention row and an **Attention** filter chip in Inbox. The amber count rides on the Inbox tab badge.
+2. **One-tap answers from notifications, for internal decisions.** Top 2 options plus Open; an inline answer turns into the Sending notification with Undo. External-provenance decisions never get inline answers (AGENTS.md rule).
+3. **Pairing: QR first, token paste as fallback.** Needs a new core pairing endpoint, built in a later PR.
+
 ## Open questions for David
 
-1. **Bottom tabs:** are Inbox · Stale · Updates · Settings right? Or should Stale fold into Inbox as a section, with Settings moving behind the app bar?
-2. **Inline notification answers:** allow one-tap answers from the notification for internal decisions (with the Sending/Undo follow-up)? Or should every answer open the app?
-3. **Lock screen:** require unlock to answer (proposed), or allow answering from the lock screen since the undo window exists? Should the lock screen show the full text, or only "Nod: 1 urgent decision"?
-4. **External decisions:** is the extra confirm sheet wanted, or is "no default, no inline answer" enough?
-5. **Pairing:** add a QR pairing endpoint to core, or keep token paste only for phase 2?
-6. **Glasses priority:** when the glasses are on, should non-urgent decisions go to the glasses only, with a silent phone notification (proposed)?
-7. **Offline answers:** queue them and send on reconnect (the undo window then starts late), or disable answering offline (proposed)?
-8. **Call Me from the app bar:** always visible as a task-creation shortcut, or only inside a decision?
-9. **Haptics:** a distinct vibration pattern for urgent, and a short tick when the undo window ends?
-10. **Undo length per type:** show the configured length ("Undo window: 5 min for deploys") in the detail, or just let the bar show it?
+Each has the default this doc recommends. The mockups show the recommended default.
+
+1. **Lock screen:** require unlock to answer, or allow answering from the lock screen since the undo window exists? Full text, or only "Nod: 1 urgent decision"? **Recommended:** full text visible; answering requires unlock.
+2. **External decisions:** is the extra confirm sheet wanted, or is "no default, no inline answer" enough? **Recommended:** keep the confirm sheet, since these writes leave the company.
+3. **Glasses priority:** when the glasses are on, should non-urgent decisions go to the glasses only, with a silent phone notification? **Recommended:** yes; urgent alerts on both.
+4. **Offline answers:** queue them and send on reconnect (the undo window then starts late), or disable answering offline? **Recommended:** disable answering offline.
+5. **Call Me from the app bar:** always visible as a task-creation shortcut, or only inside a decision? **Recommended:** always visible (disabled outside open hours).
+6. **Haptics:** a distinct vibration pattern for urgent, and a short tick when the undo window ends? **Recommended:** yes to both.
+7. **Undo length per type:** show the configured length ("Undo window: 5 min for deploys") in the detail, or just let the bar show it? **Recommended:** the bar only; no extra text.
 
 ## Component and token mapping
 
 Mapping from the web design system (`packages/design-tokens`, `apps/web/public/style.css`) to the planned Expo stack: NativeWind and react-native-reusables. The token values are the same. Only the delivery changes: `tokens.json` should gain a generated NativeWind/Tailwind theme (`--color-*` → `colors`, spacing → `spacing`, type → `fontSize`), next to `tokens.css`, the same way `generate.mjs` already emits CSS and JS.
 
-| Mockup / web class                  | React Native component (proposed)                                                  | Tokens                                                                                      |
-| ----------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `.appbar`, `.wordmark`              | `AppBar` with a `PixelText` wordmark (SVG from `pixelText()` in `@nod/design-tokens`) | `bg`, `line`, `accentInk`, `effect.glow`                                                    |
-| `.bottomnav`, `.navbadge`           | Expo Router `Tabs` with a custom `TabBar`                                          | `text`, `textDim`, `accent`/`onAccent` (inbox badge), `amber` (stale badge)                 |
-| `.card`, `.needs-you`, `.urgent`    | `DecisionCard` (Pressable)                                                         | `surface`, `line`, `accentInk` brackets, `red` edge and brackets, `border.accent`            |
-| `.tag.*`                            | `Tag` (variants: urgent, external, write, sending, source)                         | `red`/`onRed`, `amber`, `accentInk`, `line`                                                 |
-| `.btn.option`, `.btn.primary`, `.rec` | `OptionButton` (primary when recommended and not external)                       | `accent`, `onAccent`, `lineStrong`, `size.control`                                          |
-| `.banner.undo`, `.meter`            | `UndoBar`, docked (Reanimated for the meter)                                       | `accentDeep`, `accentInk`, scanline pitch                                                   |
-| `.banner.held/.stale/.failed`       | `StatusBanner`                                                                     | `amber`/`amberDeep`, `red`/`redDeep`                                                        |
-| `.callout`                          | `ProvenanceCallout`                                                                | `amber`, `amberDeep`                                                                        |
-| `.sheet`, `.scrim`                  | Bottom sheet (`@gorhom/bottom-sheet` or the reusables `Dialog`)                   | `surface`, `lineStrong`                                                                     |
-| `.list-group`, `.list-row`, `.switch`, `.seg` | reusables `Switch`, `ToggleGroup`, a plain `ListRow`                       | `surface`, `line`, `accent`                                                                 |
-| `.empty`, `.illo`                   | `EmptyState` with `PixelIllustration` (two-ink SVG from `illustrations`)           | `textDim`, `accentInk`                                                                      |
-| `.icon icon-*`                      | `PixelIcon name=` rendering the 12x12 grids from `icons`                            | `currentColor`                                                                              |
-| `.g2-screen`, `.ring`               | `GlassesPreview` (the same layout code as the Even Hub app, if shared)             | `glassesLevel()`; pure green on black                                                       |
-| `.call`, `.transcript`, `.round`    | `CallScreen` (ConnectionService handles the system UI; this is the in-app view)    | `accentInk` wave, `red` end                                                                 |
-| Notifications                       | Notifee or expo-notifications with channels, actions and `authenticationRequired`   | The small icon is the app icon from `appIcon`; the accent colour `accent`                   |
+| Mockup / web class                            | React Native component (proposed)                                                     | Tokens                                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `.appbar`, `.wordmark`                        | `AppBar` with a `PixelText` wordmark (SVG from `pixelText()` in `@nod/design-tokens`) | `bg`, `line`, `accentInk`, `effect.glow`                                          |
+| `.bottomnav`, `.navbadges`                    | Expo Router `Tabs` with a custom `TabBar`                                             | `text`, `textDim`, `accent`/`onAccent` (inbox badge), `amber` (attention badge)   |
+| `.card`, `.needs-you`, `.urgent`              | `DecisionCard` (Pressable)                                                            | `surface`, `line`, `accentInk` brackets, `red` edge and brackets, `border.accent` |
+| `.tag.*`                                      | `Tag` (variants: urgent, external, write, sending, source)                            | `red`/`onRed`, `amber`, `accentInk`, `line`                                       |
+| `.btn.option`, `.btn.primary`, `.rec`         | `OptionButton` (primary when recommended and not external)                            | `accent`, `onAccent`, `lineStrong`, `size.control`                                |
+| `.banner.undo`, `.meter`                      | `UndoBar`, docked (Reanimated for the meter)                                          | `accentDeep`, `accentInk`, scanline pitch                                         |
+| `.chips`, `.attn-strip`                       | reusables `ToggleGroup` as filter chips; `AttentionRow` (Pressable)                   | `text`/`bg` (selected chip), `amber`, `amberDeep`                                 |
+| `.banner.held/.stale/.failed`                 | `StatusBanner`                                                                        | `amber`/`amberDeep`, `red`/`redDeep`                                              |
+| `.callout`                                    | `ProvenanceCallout`                                                                   | `amber`, `amberDeep`                                                              |
+| `.sheet`, `.scrim`                            | Bottom sheet (`@gorhom/bottom-sheet` or the reusables `Dialog`)                       | `surface`, `lineStrong`                                                           |
+| `.list-group`, `.list-row`, `.switch`, `.seg` | reusables `Switch`, `ToggleGroup`, a plain `ListRow`                                  | `surface`, `line`, `accent`                                                       |
+| `.empty`, `.illo`                             | `EmptyState` with `PixelIllustration` (two-ink SVG from `illustrations`)              | `textDim`, `accentInk`                                                            |
+| `.icon icon-*`                                | `PixelIcon name=` rendering the 12x12 grids from `icons`                              | `currentColor`                                                                    |
+| `.g2-screen`, `.ring`                         | `GlassesPreview` (the same layout code as the Even Hub app, if shared)                | `glassesLevel()`; pure green on black                                             |
+| `.call`, `.transcript`, `.round`              | `CallScreen` (ConnectionService handles the system UI; this is the in-app view)       | `accentInk` wave, `red` end                                                       |
+| Notifications                                 | Notifee or expo-notifications with channels, actions and `authenticationRequired`     | The small icon is the app icon from `appIcon`; the accent colour `accent`         |
 
 New icons added for mobile: `call`, `glasses`, `gear`, `mic` (in `packages/design-tokens/icons.json`, 31 icons in total).
 
@@ -289,25 +307,25 @@ python3 -m http.server 8765
 # http://localhost:8765/docs/design/mobile/mockups/screen.html?s=detail&t=light
 ```
 
-Screen ids: `inbox`, `detail`, `undo`, `external`, `stale`, `updates`, `settings`, `onboarding`, `empty`, `offline`, `shade`, `headsup`, `lock`, `glasses`, `call`.
+Screen ids: `inbox`, `detail`, `undo`, `external`, `attention`, `updates`, `settings`, `onboarding`, `empty`, `offline`, `shade`, `headsup`, `lock`, `glasses`, `call`.
 
-| Screenshot                                                       | Shows                                                                                    |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `00-contact-sheet.png`                                           | All screens                                                                              |
-| `01-inbox-dark.png`, `02-inbox-light.png`                        | Inbox: urgent first, brackets on cards needing an answer, an answered card sending       |
-| `03-detail-dark.png`, `04-detail-light.png`                      | Detail: impact, options with the recommended one in green, default, freshness, dock      |
-| `05-undo-dark.png`, `06-undo-light.png`                          | Answered; the undo bar docked                                                            |
-| `07-external-dark.png`                                           | External provenance: callout, no green option, confirm sheet                             |
-| `08-stale-dark.png`                                              | Stale & conflicts: changed, failed, queued behind a lock                                 |
-| `09-updates-dark.png`                                            | Updates: sweep summary and history                                                       |
-| `10-settings-dark.png`                                           | Settings                                                                                 |
-| `11-onboarding-dark.png`                                         | Pairing (proposal)                                                                       |
-| `12-empty-dark.png`                                              | All clear during quiet hours                                                             |
-| `13-offline-dark.png`                                            | Offline                                                                                  |
-| `14-shade-dark.png`, `15-shade-light.png`                        | Notification shade: urgent with actions, Sending with Undo, external with Review only, batch |
-| `16-headsup-dark.png`                                            | Urgent heads-up over another app                                                         |
-| `17-lock-dark.png`                                               | Lock screen: answering needs unlock                                                      |
-| `18-glasses-dark.png`                                            | Glasses handoff, with a G2 preview                                                       |
-| `19-call-dark.png`                                               | Call Me in progress, with the I-heard confirm                                            |
+| Screenshot                                  | Shows                                                                                        |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `00-contact-sheet.png`                      | All screens                                                                                  |
+| `01-inbox-dark.png`, `02-inbox-light.png`   | Inbox: filter chips, amber attention row, urgent first, an answered card sending             |
+| `03-detail-dark.png`, `04-detail-light.png` | Detail: impact, options with the recommended one in green, default, freshness, dock          |
+| `05-undo-dark.png`, `06-undo-light.png`     | Answered; the undo bar docked                                                                |
+| `07-external-dark.png`                      | External provenance: callout, no green option, confirm sheet                                 |
+| `08-attention-dark.png`                     | Inbox, Attention filter: changed, failed, queued behind a lock                               |
+| `09-updates-dark.png`                       | Updates: sweep summary and history                                                           |
+| `10-settings-dark.png`                      | Settings                                                                                     |
+| `11-onboarding-dark.png`                    | Pairing: QR first, token paste fallback                                                      |
+| `12-empty-dark.png`                         | All clear during quiet hours                                                                 |
+| `13-offline-dark.png`                       | Offline                                                                                      |
+| `14-shade-dark.png`, `15-shade-light.png`   | Notification shade: urgent with actions, Sending with Undo, external with Review only, batch |
+| `16-headsup-dark.png`                       | Urgent heads-up over another app                                                             |
+| `17-lock-dark.png`                          | Lock screen: answering needs unlock                                                          |
+| `18-glasses-dark.png`                       | Glasses handoff, with a G2 preview                                                           |
+| `19-call-dark.png`                          | Call Me in progress, with the I-heard confirm                                                |
 
 To regenerate the screenshots, use Playwright (Chromium). Use a 390×844 viewport at device scale factor 3, wait for `body[data-ready="1"]` and `document.fonts.ready`, then screenshot the `.phone` element.

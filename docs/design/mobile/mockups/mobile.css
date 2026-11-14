@@ -127,7 +127,7 @@ body.mock {
 .bottomnav {
   flex: none;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   height: 64px;
   border-top: var(--border-hairline) solid var(--color-line);
   background: var(--color-bg);
@@ -157,10 +157,14 @@ body.mock {
   height: 2px;
   background: var(--color-text);
 }
-.navbadge {
+.navbadges {
   position: absolute;
   top: 8px;
   left: calc(50% + 6px);
+  display: flex;
+  gap: 2px;
+}
+.navbadge {
   min-width: 18px;
   padding: 0 4px;
   font-size: 11px;
@@ -951,4 +955,74 @@ body.mock {
 }
 .round.end .icon {
   transform: rotate(135deg);
+}
+
+/* Inbox filter chips and the attention row (Stale folded into Inbox, 2026-11-14). */
+.chips {
+  display: flex;
+  gap: var(--space-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: var(--border-hairline) solid var(--color-line-strong);
+  color: var(--color-text-dim);
+  font-size: 13px;
+  font-weight: 600;
+}
+.chip-n {
+  color: var(--color-text);
+}
+.chip.on {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-bg);
+}
+.chip.on .chip-n {
+  color: var(--color-bg);
+}
+.chip.warn {
+  border-color: var(--color-amber);
+  color: var(--color-amber);
+}
+.chip.warn .chip-n {
+  color: var(--color-amber);
+}
+.chip.warn.on {
+  background: var(--color-amber-deep);
+}
+.attn-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline) solid var(--color-amber);
+  background: var(--color-amber-deep);
+  color: var(--color-amber);
+}
+.attn-strip .grow {
+  flex: 1;
+  display: grid;
+}
+.attn-strip b {
+  font-size: 14px;
+}
+.attn-strip small {
+  font-size: 12px;
+  line-height: 16px;
+}
+.attn-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  letter-spacing: var(--type-label-tracking);
+  text-transform: uppercase;
+}
+.stale-card {
+  box-shadow: inset var(--border-accent) 0 0 var(--color-amber);
 }
