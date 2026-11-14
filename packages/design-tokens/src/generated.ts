@@ -852,6 +852,78 @@ export const icons = {
       "....####...."
     ],
     "path": "M4 0h4v1h-4zM2 1h4v1h-4zM8 1h2v1h-2zM1 2h6v1h-6zM10 2h1v1h-1zM1 3h6v1h-6zM10 3h1v1h-1zM0 4h6v1h-6zM11 4h1v1h-1zM0 5h6v1h-6zM11 5h1v1h-1zM0 6h6v1h-6zM11 6h1v1h-1zM0 7h6v1h-6zM11 7h1v1h-1zM1 8h6v1h-6zM10 8h1v1h-1zM1 9h6v1h-6zM10 9h1v1h-1zM2 10h4v1h-4zM8 10h2v1h-2zM4 11h4v1h-4z"
+  },
+  "call": {
+    "use": "Call Me: talk a decision through",
+    "rows": [
+      "............",
+      ".##.........",
+      "####........",
+      "####........",
+      ".##.........",
+      ".##.........",
+      "..##........",
+      "..###...##..",
+      "...########.",
+      "....#######.",
+      "......####..",
+      "............"
+    ],
+    "path": "M1 1h2v1h-2zM0 2h4v1h-4zM0 3h4v1h-4zM1 4h2v1h-2zM1 5h2v1h-2zM2 6h2v1h-2zM2 7h3v1h-3zM8 7h2v1h-2zM3 8h8v1h-8zM4 9h7v1h-7zM6 10h4v1h-4z"
+  },
+  "glasses": {
+    "use": "Even G2 glasses: paired, showing a decision",
+    "rows": [
+      "............",
+      "............",
+      "............",
+      "#..........#",
+      "#####..#####",
+      "#...####...#",
+      "#...#..#...#",
+      "#...#..#...#",
+      ".###....###.",
+      "............",
+      "............",
+      "............"
+    ],
+    "path": "M0 3h1v1h-1zM11 3h1v1h-1zM0 4h5v1h-5zM7 4h5v1h-5zM0 5h1v1h-1zM4 5h4v1h-4zM11 5h1v1h-1zM0 6h1v1h-1zM4 6h1v1h-1zM7 6h1v1h-1zM11 6h1v1h-1zM0 7h1v1h-1zM4 7h1v1h-1zM7 7h1v1h-1zM11 7h1v1h-1zM1 8h3v1h-3zM8 8h3v1h-3z"
+  },
+  "gear": {
+    "use": "Settings",
+    "rows": [
+      ".....##.....",
+      "..#..##..#..",
+      ".###....###.",
+      "..#.####.#..",
+      "...#....#...",
+      "##.#.##.#.##",
+      "##.#.##.#.##",
+      "...#....#...",
+      "..#.####.#..",
+      ".###....###.",
+      "..#..##..#..",
+      ".....##....."
+    ],
+    "path": "M5 0h2v1h-2zM2 1h1v1h-1zM5 1h2v1h-2zM9 1h1v1h-1zM1 2h3v1h-3zM8 2h3v1h-3zM2 3h1v1h-1zM4 3h4v1h-4zM9 3h1v1h-1zM3 4h1v1h-1zM8 4h1v1h-1zM0 5h2v1h-2zM3 5h1v1h-1zM5 5h2v1h-2zM8 5h1v1h-1zM10 5h2v1h-2zM0 6h2v1h-2zM3 6h1v1h-1zM5 6h2v1h-2zM8 6h1v1h-1zM10 6h2v1h-2zM3 7h1v1h-1zM8 7h1v1h-1zM2 8h1v1h-1zM4 8h4v1h-4zM9 8h1v1h-1zM1 9h3v1h-3zM8 9h3v1h-3zM2 10h1v1h-1zM5 10h2v1h-2zM9 10h1v1h-1zM5 11h2v1h-2z"
+  },
+  "mic": {
+    "use": "Voice: listening, dictate an Other answer",
+    "rows": [
+      "....####....",
+      "...#....#...",
+      "...#....#...",
+      "...#....#...",
+      "...#....#...",
+      ".#.#....#.#.",
+      ".#..####..#.",
+      "..#......#..",
+      "...######...",
+      ".....##.....",
+      ".....##.....",
+      "...######..."
+    ],
+    "path": "M4 0h4v1h-4zM3 1h1v1h-1zM8 1h1v1h-1zM3 2h1v1h-1zM8 2h1v1h-1zM3 3h1v1h-1zM8 3h1v1h-1zM3 4h1v1h-1zM8 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM8 5h1v1h-1zM10 5h1v1h-1zM1 6h1v1h-1zM4 6h4v1h-4zM10 6h1v1h-1zM2 7h1v1h-1zM9 7h1v1h-1zM3 8h6v1h-6zM5 9h2v1h-2zM5 10h2v1h-2zM3 11h6v1h-6z"
   }
 } as const;
 

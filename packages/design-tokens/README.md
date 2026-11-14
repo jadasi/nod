@@ -30,7 +30,7 @@ Pixel effects mark action and interaction; they are not a default skin.
 | File              | What                                                                                                                                                                                   |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tokens.json`     | Colour names and two themes, contrast pairs, fonts, type scale, pixel-font scales, 4px spacing grid, borders, radius (always 0), control sizes, motion, emphasis rules, glasses levels |
-| `icons.json`      | 24 original 12x12 pixel icons, plus the 24x24 app icon, drawn as `#`/`.` grids                                                                                                         |
+| `icons.json`      | 31 original 12x12 pixel icons, plus the 24x24 app icon, drawn as `#`/`.` grids                                                                                                         |
 | `pixel-font.json` | **Nod Pixel 5x7**, an original dot-matrix display face (digits, A–Z, a little punctuation). Display only: never running text                                                           |
 
 Then run:
