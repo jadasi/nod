@@ -1,8 +1,7 @@
 {
-  "name": "@nod/adapter-paperclip",
+  "name": "@david_osco/nod-paperclip-plugin",
   "version": "0.1.0",
   "description": "Paperclip plugin: turns board approvals into Nod decisions and writes David's answers back.",
-  "private": true,
   "type": "module",
   "main": "dist/worker.js",
   "scripts": {
@@ -23,6 +22,17 @@
     "worker": "./dist/worker.js"
   },
   "files": [
-    "dist"
-  ]
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jadasi/nod.git",
+    "directory": "adapters/paperclip"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }
