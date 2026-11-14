@@ -4,15 +4,16 @@ import { describe, expect, it } from 'vitest';
 // @ts-expect-error plain JS module
 import { outputs, repoRoot } from '../scripts/generate.mjs';
 import {
+  color,
   contrastRatio,
   icons,
+  illustrations,
   pixelFont,
   pixelText,
   tokens,
   type ColorToken,
+  type ThemeName,
 } from '../src/index.js';
-
-const hex = (name: string) => tokens.color[name as ColorToken].value;
 
 describe('generated files', () => {
   const files = outputs() as Map<string, string>;
@@ -32,14 +33,22 @@ describe('generated files', () => {
 });
 
 describe('contrast', () => {
-  for (const [fg, bg] of tokens.contrast.text) {
-    it(`text ${fg} on ${bg} meets WCAG AA (4.5:1)`, () => {
-      expect(contrastRatio(hex(fg), hex(bg))).toBeGreaterThanOrEqual(4.5);
-    });
-  }
-  for (const [fg, bg] of tokens.contrast.nonText) {
-    it(`non-text ${fg} on ${bg} meets 3:1`, () => {
-      expect(contrastRatio(hex(fg), hex(bg))).toBeGreaterThanOrEqual(3);
+  for (const theme of Object.keys(tokens.themes) as ThemeName[]) {
+    const hex = (name: string) => color(name as ColorToken, theme);
+    for (const [fg, bg] of tokens.contrast.text) {
+      it(`${theme}: text ${fg} on ${bg} meets WCAG AA (4.5:1)`, () => {
+        expect(contrastRatio(hex(fg), hex(bg))).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+    for (const [fg, bg] of tokens.contrast.nonText) {
+      it(`${theme}: non-text ${fg} on ${bg} meets 3:1`, () => {
+        expect(contrastRatio(hex(fg), hex(bg))).toBeGreaterThanOrEqual(3);
+      });
+    }
+    it(`${theme}: defines every colour token`, () => {
+      expect(Object.keys(tokens.themes[theme].color).sort()).toEqual(
+        Object.keys(tokens.color).sort(),
+      );
     });
   }
 
@@ -55,6 +64,16 @@ describe('icons', () => {
       expect(icon.rows).toHaveLength(tokens.icon.grid);
       for (const row of icon.rows) expect(row).toMatch(/^[#.]{12}$/);
       expect(icon.path.length).toBeGreaterThan(0);
+    });
+  }
+});
+
+describe('illustrations', () => {
+  for (const [name, illo] of Object.entries(illustrations)) {
+    it(`${name} is a rectangular grid with both inks`, () => {
+      for (const row of illo.rows) expect(row).toMatch(new RegExp(`^[#.+]{${illo.width}}$`));
+      expect(illo.path.length).toBeGreaterThan(0);
+      expect(illo.accentPath.length).toBeGreaterThan(0);
     });
   }
 });

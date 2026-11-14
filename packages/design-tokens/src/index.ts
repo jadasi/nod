@@ -2,13 +2,15 @@
 // Values live in tokens.json, icons.json and pixel-font.json; `generated.ts` is built from them.
 import { pixelFont, tokens } from './generated.js';
 
-export { appIcon, icons, pixelFont, tokens } from './generated.js';
+export { appIcon, icons, illustrations, pixelFont, tokens } from './generated.js';
 
 export type ColorToken = keyof typeof tokens.color;
+export type ThemeName = keyof typeof tokens.themes;
 export type IconName = keyof typeof import('./generated.js').icons;
 
-/** A colour token's hex value. */
-export const color = (name: ColorToken): string => tokens.color[name].value;
+/** A colour token's hex value in a theme (dark by default, as on the glasses). */
+export const color = (name: ColorToken, theme: ThemeName = 'dark'): string =>
+  tokens.themes[theme].color[name];
 
 function luminance(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => {

@@ -4,68 +4,115 @@ export const tokens = {
   "name": "Phosphor",
   "color": {
     "bg": {
-      "value": "#050805",
-      "use": "Page background: near-black with a green cast"
+      "use": "Page background"
     },
     "surface": {
-      "value": "#0a110b",
       "use": "Panels, cards, inputs"
     },
     "surfaceRaised": {
-      "value": "#0f1a11",
-      "use": "Hover and pressed panels"
-    },
-    "phosphorDeep": {
-      "value": "#0c2412",
-      "use": "Tinted fills behind phosphor text"
+      "use": "Hover fills, pressed controls, code blocks"
     },
     "line": {
-      "value": "#1d4a28",
-      "use": "Decorative panel outlines and dividers (not for controls)"
+      "use": "Decorative outlines and dividers (not for controls)"
     },
     "lineStrong": {
-      "value": "#3a8a4f",
-      "use": "Outlines of interactive controls; meets 3:1 against every surface"
-    },
-    "phosphor": {
-      "value": "#5dff8a",
-      "use": "Display text, titles, primary actions, focus ring, live status"
+      "use": "Outlines of interactive controls; meets 3:1 on every surface"
     },
     "text": {
-      "value": "#b4f5c2",
-      "use": "Body text"
+      "use": "Body text and titles"
     },
     "textDim": {
-      "value": "#62a873",
       "use": "Secondary text, labels, placeholders"
     },
     "textFaint": {
-      "value": "#3e7a4c",
       "use": "Disabled text only (exempt from contrast rules)"
     },
-    "onPhosphor": {
-      "value": "#031206",
-      "use": "Text on phosphor, amber or red fills"
+    "accent": {
+      "use": "Phosphor green fill: logo, primary actions, count badges, undo meter. Never a background for large areas"
+    },
+    "accentInk": {
+      "use": "Phosphor green as text, icons and focus ring: live status, waiting count, undo countdown, action emphasis"
+    },
+    "accentDeep": {
+      "use": "Tinted fill behind accent ink (undo bar, emphasised hover)"
+    },
+    "onAccent": {
+      "use": "Text on accent fills"
     },
     "amber": {
-      "value": "#ffc247",
       "use": "Caution: external provenance, writes, dry-run, held"
     },
     "amberDeep": {
-      "value": "#261c06",
       "use": "Fill behind amber text"
     },
     "red": {
-      "value": "#ff6e5e",
       "use": "Urgent, failed, stale, destructive"
     },
     "redDeep": {
-      "value": "#2a0d0a",
       "use": "Fill behind red text"
+    },
+    "onRed": {
+      "use": "Text on red fills (urgent badge)"
+    }
+  },
+  "themes": {
+    "dark": {
+      "note": "Default. Dark gray, not green-tinted; green is an accent only.",
+      "scheme": "dark",
+      "color": {
+        "bg": "#121314",
+        "surface": "#1a1b1d",
+        "surfaceRaised": "#232528",
+        "line": "#2f3236",
+        "lineStrong": "#6c7178",
+        "text": "#e8e9eb",
+        "textDim": "#a3a8af",
+        "textFaint": "#5f646b",
+        "accent": "#5dff8a",
+        "accentInk": "#5dff8a",
+        "accentDeep": "#12291a",
+        "onAccent": "#06140b",
+        "amber": "#ffc247",
+        "amberDeep": "#2b2210",
+        "red": "#ff6e5e",
+        "redDeep": "#2e1513",
+        "onRed": "#16090a"
+      },
+      "effect": {
+        "glow": "0 0 6px rgba(93, 255, 138, 0.45)",
+        "scanline": "rgba(93, 255, 138, 0.10)"
+      }
+    },
+    "light": {
+      "note": "Very light gray. accentInk is a deeper green so it passes AA as text.",
+      "scheme": "light",
+      "color": {
+        "bg": "#f3f4f5",
+        "surface": "#ffffff",
+        "surfaceRaised": "#e9ebed",
+        "line": "#dadde0",
+        "lineStrong": "#7d828a",
+        "text": "#16181a",
+        "textDim": "#555a61",
+        "textFaint": "#a4a8ad",
+        "accent": "#33e070",
+        "accentInk": "#0a7a35",
+        "accentDeep": "#e2f8e9",
+        "onAccent": "#04170b",
+        "amber": "#8a5a00",
+        "amberDeep": "#fdf1d8",
+        "red": "#c0281b",
+        "redDeep": "#fde6e3",
+        "onRed": "#ffffff"
+      },
+      "effect": {
+        "glow": "none",
+        "scanline": "rgba(10, 122, 53, 0.14)"
+      }
     }
   },
   "contrast": {
-    "note": "Pairs checked by the package tests. Text pairs need WCAG AA 4.5:1; non-text (control outlines, focus ring, icons) need 3:1.",
+    "note": "Checked by the package tests in every theme. Text pairs need WCAG AA 4.5:1; non-text (control outlines, focus ring, icons) need 3:1.",
     "text": [
       [
         "text",
@@ -80,16 +127,8 @@ export const tokens = {
         "surfaceRaised"
       ],
       [
-        "phosphor",
-        "bg"
-      ],
-      [
-        "phosphor",
-        "surface"
-      ],
-      [
-        "phosphor",
-        "phosphorDeep"
+        "text",
+        "accentDeep"
       ],
       [
         "textDim",
@@ -102,6 +141,26 @@ export const tokens = {
       [
         "textDim",
         "surfaceRaised"
+      ],
+      [
+        "accentInk",
+        "bg"
+      ],
+      [
+        "accentInk",
+        "surface"
+      ],
+      [
+        "accentInk",
+        "surfaceRaised"
+      ],
+      [
+        "accentInk",
+        "accentDeep"
+      ],
+      [
+        "onAccent",
+        "accent"
       ],
       [
         "amber",
@@ -128,15 +187,7 @@ export const tokens = {
         "redDeep"
       ],
       [
-        "onPhosphor",
-        "phosphor"
-      ],
-      [
-        "onPhosphor",
-        "amber"
-      ],
-      [
-        "onPhosphor",
+        "onRed",
         "red"
       ]
     ],
@@ -154,15 +205,28 @@ export const tokens = {
         "surfaceRaised"
       ],
       [
-        "phosphor",
-        "surfaceRaised"
+        "accentInk",
+        "bg"
+      ],
+      [
+        "accentInk",
+        "surface"
       ]
     ]
   },
   "font": {
     "body": {
-      "value": "ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace",
-      "use": "All running text. A legible system monospace: no web font download."
+      "value": "'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+      "use": "All running text, labels and buttons. Space Grotesk (OFL 1.1), self-hosted variable woff2, weights 300-700.",
+      "files": [
+        "space-grotesk-latin-wght-normal.woff2",
+        "space-grotesk-latin-ext-wght-normal.woff2"
+      ],
+      "license": "SIL Open Font License 1.1"
+    },
+    "mono": {
+      "value": "ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace",
+      "use": "Technical evidence only (diffs, logs). System fonts."
     },
     "display": {
       "value": "Nod Pixel 5x7",
@@ -174,7 +238,7 @@ export const tokens = {
       "size": 11,
       "lineHeight": 16,
       "weight": 600,
-      "tracking": 0.12,
+      "tracking": 0.1,
       "case": "upper"
     },
     "small": {
@@ -251,17 +315,14 @@ export const tokens = {
     "slow": 400,
     "easing": "cubic-bezier(0.2, 0, 0, 1)",
     "stepped": "steps(4, end)",
-    "note": "All motion is cosmetic and is removed under prefers-reduced-motion, except countdowns, which tick in whole seconds."
+    "note": "Cosmetic motion is removed under prefers-reduced-motion. The undo meter stays: it is information."
   },
-  "effect": {
-    "glow": {
-      "value": "0 0 6px rgba(93, 255, 138, 0.35)",
-      "use": "Display text and live status only"
-    },
-    "scanlineOpacity": {
-      "value": 0.035,
-      "use": "Static CRT scanline overlay; off under reduced motion and high contrast"
-    }
+  "emphasis": {
+    "note": "Pixel effects are emphasis, not decoration. Plain panels are clean gray outlines.",
+    "action": "Decisions that need an answer, the undo bar and sign-in get accent corner brackets; the undo bar also gets scanlines. Primary buttons are the green fill.",
+    "interactive": "Hover and keyboard focus add scanlines and corner brackets to cards and buttons instead of a solid fill change.",
+    "display": "The wordmark, clock and counts use the pixel face; empty and sign-in states use pixel illustrations.",
+    "scanlinePitch": 3
   },
   "icon": {
     "grid": 12,
@@ -275,23 +336,25 @@ export const tokens = {
       "height": 288,
       "color": "monochrome green"
     },
-    "note": "The G2 shows one hue at a few brightness levels. Map each color token to a level 0-15 (0 = off). Meaning carried by hue on the web (amber, red) must be carried by an icon, inversion or position on the glasses.",
+    "note": "The G2 shows one hue at a few brightness levels, so the glasses use the dark theme mapped to levels 0-15 (0 = off, see-through). Meaning carried by hue on the web (amber, red, green accent) must be carried by an icon, inversion or position on the glasses.",
     "level": {
       "bg": 0,
       "surface": 0,
       "surfaceRaised": 2,
-      "phosphorDeep": 2,
-      "line": 5,
-      "lineStrong": 8,
-      "phosphor": 15,
-      "text": 13,
-      "textDim": 9,
-      "textFaint": 5,
-      "onPhosphor": 0,
+      "line": 4,
+      "lineStrong": 7,
+      "text": 12,
+      "textDim": 8,
+      "textFaint": 4,
+      "accent": 15,
+      "accentInk": 15,
+      "accentDeep": 3,
+      "onAccent": 0,
       "amber": 15,
       "amberDeep": 3,
       "red": 15,
-      "redDeep": 3
+      "redDeep": 3,
+      "onRed": 0
     },
     "semantics": {
       "urgent": "Inverted badge (level 15 fill, text off) plus the alert icon",
@@ -735,6 +798,122 @@ export const icons = {
       "............"
     ],
     "path": "M1 1h2v1h-2zM1 2h4v1h-4zM1 3h1v1h-1zM4 3h3v1h-3zM1 4h1v1h-1zM6 4h3v1h-3zM1 5h1v1h-1zM8 5h3v1h-3zM1 6h1v1h-1zM8 6h3v1h-3zM1 7h1v1h-1zM6 7h3v1h-3zM1 8h1v1h-1zM4 8h3v1h-3zM1 9h4v1h-4zM1 10h2v1h-2z"
+  },
+  "sun": {
+    "use": "Light theme",
+    "rows": [
+      ".....##.....",
+      ".#...##...#.",
+      "..#......#..",
+      "....####....",
+      "...#....#...",
+      "##.#....#.##",
+      "##.#....#.##",
+      "...#....#...",
+      "....####....",
+      "..#......#..",
+      ".#...##...#.",
+      ".....##....."
+    ],
+    "path": "M5 0h2v1h-2zM1 1h1v1h-1zM5 1h2v1h-2zM10 1h1v1h-1zM2 2h1v1h-1zM9 2h1v1h-1zM4 3h4v1h-4zM3 4h1v1h-1zM8 4h1v1h-1zM0 5h2v1h-2zM3 5h1v1h-1zM8 5h1v1h-1zM10 5h2v1h-2zM0 6h2v1h-2zM3 6h1v1h-1zM8 6h1v1h-1zM10 6h2v1h-2zM3 7h1v1h-1zM8 7h1v1h-1zM4 8h4v1h-4zM2 9h1v1h-1zM9 9h1v1h-1zM1 10h1v1h-1zM5 10h2v1h-2zM10 10h1v1h-1zM5 11h2v1h-2z"
+  },
+  "moon": {
+    "use": "Dark theme",
+    "rows": [
+      "....###.....",
+      "..###.......",
+      ".##.........",
+      ".##.........",
+      "##..........",
+      "##..........",
+      "##.........#",
+      "##........##",
+      ".##......##.",
+      ".###....###.",
+      "..########..",
+      "....####...."
+    ],
+    "path": "M4 0h3v1h-3zM2 1h3v1h-3zM1 2h2v1h-2zM1 3h2v1h-2zM0 4h2v1h-2zM0 5h2v1h-2zM0 6h2v1h-2zM11 6h1v1h-1zM0 7h2v1h-2zM10 7h2v1h-2zM1 8h2v1h-2zM9 8h2v1h-2zM1 9h3v1h-3zM8 9h3v1h-3zM2 10h8v1h-8zM4 11h4v1h-4z"
+  },
+  "auto": {
+    "use": "Theme follows the system",
+    "rows": [
+      "....####....",
+      "..####..##..",
+      ".######...#.",
+      ".######...#.",
+      "######.....#",
+      "######.....#",
+      "######.....#",
+      "######.....#",
+      ".######...#.",
+      ".######...#.",
+      "..####..##..",
+      "....####...."
+    ],
+    "path": "M4 0h4v1h-4zM2 1h4v1h-4zM8 1h2v1h-2zM1 2h6v1h-6zM10 2h1v1h-1zM1 3h6v1h-6zM10 3h1v1h-1zM0 4h6v1h-6zM11 4h1v1h-1zM0 5h6v1h-6zM11 5h1v1h-1zM0 6h6v1h-6zM11 6h1v1h-1zM0 7h6v1h-6zM11 7h1v1h-1zM1 8h6v1h-6zM10 8h1v1h-1zM1 9h6v1h-6zM10 9h1v1h-1zM2 10h4v1h-4zM8 10h2v1h-2zM4 11h4v1h-4z"
+  }
+} as const;
+
+/** Two-ink pixel illustrations: `path` in the text colour, `accentPath` in accentInk. */
+export const illustrations = {
+  "empty": {
+    "use": "Empty inbox: a cleared tray with a check",
+    "width": 32,
+    "height": 24,
+    "rows": [
+      "................................",
+      "................................",
+      ".....................++.........",
+      ".....#..............++..........",
+      "....#+#............++...........",
+      ".....#............++............",
+      ".........++......++.......#.....",
+      "..........++....++.......#+#....",
+      "...........++..++.........#.....",
+      ".......#....++++................",
+      ".............++.................",
+      "........................#.......",
+      "................................",
+      "....########################....",
+      "....#......................#....",
+      "....#......................#....",
+      "....######............######....",
+      "....#.....##........##.....#....",
+      "....#.......########.......#....",
+      "....#......................#....",
+      "....#.#..#..#..#..#..#..#..#....",
+      "....########################....",
+      "................................",
+      "................................"
+    ],
+    "path": "M5 3h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM5 5h1v1h-1zM26 6h1v1h-1zM25 7h1v1h-1zM27 7h1v1h-1zM26 8h1v1h-1zM7 9h1v1h-1zM24 11h1v1h-1zM4 13h24v1h-24zM4 14h1v1h-1zM27 14h1v1h-1zM4 15h1v1h-1zM27 15h1v1h-1zM4 16h6v1h-6zM22 16h6v1h-6zM4 17h1v1h-1zM10 17h2v1h-2zM20 17h2v1h-2zM27 17h1v1h-1zM4 18h1v1h-1zM12 18h8v1h-8zM27 18h1v1h-1zM4 19h1v1h-1zM27 19h1v1h-1zM4 20h1v1h-1zM6 20h1v1h-1zM9 20h1v1h-1zM12 20h1v1h-1zM15 20h1v1h-1zM18 20h1v1h-1zM21 20h1v1h-1zM24 20h1v1h-1zM27 20h1v1h-1zM4 21h24v1h-24z",
+    "accentPath": "M21 2h2v1h-2zM20 3h2v1h-2zM5 4h1v1h-1zM19 4h2v1h-2zM18 5h2v1h-2zM9 6h2v1h-2zM17 6h2v1h-2zM10 7h2v1h-2zM16 7h2v1h-2zM26 7h1v1h-1zM11 8h2v1h-2zM15 8h2v1h-2zM12 9h4v1h-4zM13 10h2v1h-2z"
+  },
+  "signin": {
+    "use": "Device token entry: glasses with a heads-up check",
+    "width": 32,
+    "height": 16,
+    "rows": [
+      "...............#................",
+      "..............#+#...............",
+      "...............#................",
+      "................................",
+      "..############....############..",
+      "##############....##############",
+      "#.#..........######..........#.#",
+      "..#.......+..#....#..........#..",
+      "..#..+...+...#....#..++++++..#..",
+      "..#...+.+....#....#..........#..",
+      "..#....+.....#....#..++++....#..",
+      "..#..........#....#..........#..",
+      "..############....############..",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "path": "M15 0h1v1h-1zM14 1h1v1h-1zM16 1h1v1h-1zM15 2h1v1h-1zM2 4h12v1h-12zM18 4h12v1h-12zM0 5h14v1h-14zM18 5h14v1h-14zM0 6h1v1h-1zM2 6h1v1h-1zM13 6h6v1h-6zM29 6h1v1h-1zM31 6h1v1h-1zM2 7h1v1h-1zM13 7h1v1h-1zM18 7h1v1h-1zM29 7h1v1h-1zM2 8h1v1h-1zM13 8h1v1h-1zM18 8h1v1h-1zM29 8h1v1h-1zM2 9h1v1h-1zM13 9h1v1h-1zM18 9h1v1h-1zM29 9h1v1h-1zM2 10h1v1h-1zM13 10h1v1h-1zM18 10h1v1h-1zM29 10h1v1h-1zM2 11h1v1h-1zM13 11h1v1h-1zM18 11h1v1h-1zM29 11h1v1h-1zM2 12h12v1h-12zM18 12h12v1h-12z",
+    "accentPath": "M15 1h1v1h-1zM10 7h1v1h-1zM5 8h1v1h-1zM9 8h1v1h-1zM21 8h6v1h-6zM6 9h1v1h-1zM8 9h1v1h-1zM7 10h1v1h-1zM21 10h4v1h-4z"
   }
 } as const;
 
