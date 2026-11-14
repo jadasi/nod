@@ -3,29 +3,76 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0f1115" />
+    <meta name="theme-color" content="#121314" />
     <meta name="robots" content="noindex" />
     <title>Nod</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/space-grotesk-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="/tokens.css" />
     <link rel="stylesheet" href="/style.css" />
+    <script src="/theme.js"></script>
   </head>
   <body>
-    <header>
-      <h1>Nod</h1>
-      <nav id="tabs" hidden>
-        <button data-tab="inbox" class="active">
-          Inbox <span id="count-inbox" class="count"></span>
-        </button>
-        <button data-tab="repair">
-          Stale &amp; conflicts <span id="count-repair" class="count"></span>
-        </button>
-        <button data-tab="updates">Updates</button>
-      </nav>
-      <span id="conn" class="conn" title="Live connection"></span>
-    </header>
-    <div id="mode" class="mode" hidden></div>
-    <main id="view"></main>
+    <a class="skip" href="#view">Skip to content</a>
+    <div class="shell">
+      <header class="hud">
+        <div class="hud-bar">
+          <h1 id="wordmark" class="wordmark">Nod</h1>
+          <div class="hud-status">
+            <span id="conn" class="conn" title="Live connection">
+              <span class="conn-on"
+                ><span class="icon icon-live sm" aria-hidden="true"></span>Live</span
+              >
+              <span class="conn-off"
+                ><span class="icon icon-offline sm" aria-hidden="true"></span>Offline</span
+              >
+            </span>
+            <span id="clock" class="clock"></span>
+            <button id="theme" class="theme-toggle" type="button" data-mode="system">
+              <span class="icon icon-auto sm" aria-hidden="true"></span>
+              <span class="icon icon-sun sm" aria-hidden="true"></span>
+              <span class="icon icon-moon sm" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+        <div class="hud-rail" aria-hidden="true">
+          <div id="hud-date" class="hud-date"></div>
+          <div id="hud-clock" class="hud-clock"></div>
+          <div class="hud-waiting">
+            <span class="icon icon-inbox sm"></span>
+            <span id="hud-count" class="hud-count"></span>
+            <span class="label">waiting</span>
+          </div>
+        </div>
+        <nav id="tabs" aria-label="Views" hidden>
+          <button data-tab="inbox" class="active">
+            <span class="icon icon-inbox sm" aria-hidden="true"></span>
+            <span class="tab-label">Inbox</span>
+            <span id="count-inbox" class="count"></span>
+          </button>
+          <button data-tab="repair">
+            <span class="icon icon-stale sm" aria-hidden="true"></span>
+            <span class="tab-label">Stale &amp; conflicts</span>
+            <span id="count-repair" class="count"></span>
+          </button>
+          <button data-tab="updates">
+            <span class="icon icon-updates sm" aria-hidden="true"></span>
+            <span class="tab-label">Updates</span>
+          </button>
+        </nav>
+      </header>
+      <div class="main">
+        <div id="mode" class="mode" role="status" hidden></div>
+        <main id="view" tabindex="-1"></main>
+      </div>
+    </div>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

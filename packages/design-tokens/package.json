@@ -1,0 +1,25 @@
+{
+  "name": "@nod/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Nod's design system source of truth: tokens, pixel icons and the pixel font, with generated outputs for web (CSS), Android (Expo) and the G2 glasses (TS).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "tokens.json",
+    "icons.json",
+    "pixel-font.json",
+    "icons"
+  ],
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
+}

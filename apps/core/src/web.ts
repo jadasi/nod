@@ -10,6 +10,8 @@ const TYPES: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.webmanifest': 'application/manifest+json',
+  // Self-hosted fonts (OFL), so the inbox never calls a font CDN.
+  '.woff2': 'font/woff2',
 };
 
 /** apps/web/public, whether running from src/ (tests, dev) or dist/ (production). */
@@ -38,7 +40,7 @@ export function serveWeb(app: Hono<{ Variables: Variables }>, dir: string = defa
         ...(extname(file) === '.html'
           ? {
               'content-security-policy':
-                "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'",
+                "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'",
             }
           : {}),
       });

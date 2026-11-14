@@ -7,6 +7,7 @@ import {
   safeUrl,
   sortInbox,
 } from '/lib.js';
+import { setPixelText } from '/pixel.js';
 
 const TOKEN_KEY = 'nod.deviceToken';
 const $ = (sel) => document.querySelector(sel);
@@ -155,45 +156,107 @@ function signOut(message = '') {
 
 // ------------------------------------------------------------------ views
 
+/** A pixel icon from tokens.css. Decorative: the text next to it carries the meaning. */
+const icon = (name, size = '') =>
+  h('span', { class: `icon icon-${name} ${size}`, 'aria-hidden': 'true' });
+
+/** A small HUD label, e.g. "IMPACT". */
+const label = (text, tag = 'h3') => h(tag, { class: 'label' }, text);
+
+/** A pixel-font heading with the same words for screen readers. */
+function pixelHeading(text, tag = 'h2') {
+  const el = h(tag, { class: 'pixel-heading' });
+  setPixelText(el, text, { scale: 2 });
+  return el;
+}
+
 function tags(d) {
   return h(
     'div',
     { class: 'tags' },
-    d.urgency === 'urgent' && h('span', { class: 'tag urgent' }, 'Urgent'),
+    d.urgency === 'urgent' && h('span', { class: 'tag urgent' }, icon('alert', 'sm'), 'Urgent'),
     d.provenance.kind === 'external' &&
-      h('span', { class: 'tag external' }, `From external: ${d.provenance.origin || 'unknown'}`),
-    d.risk === 'write' && h('span', { class: 'tag write' }, 'Changes something'),
-    d.answer && h('span', { class: 'tag sending' }, 'Answered'),
-    h('span', { class: 'tag' }, d.source.system),
+      h(
+        'span',
+        { class: 'tag external' },
+        icon('mail', 'sm'),
+        `From external: ${d.provenance.origin || 'unknown'}`,
+      ),
+    d.risk === 'write' &&
+      h('span', { class: 'tag write' }, icon('write', 'sm'), 'Changes something'),
+    d.answer && h('span', { class: 'tag sending' }, icon('check', 'sm'), 'Answered'),
+    h(
+      'span',
+      { class: 'tag source' },
+      icon('source', 'sm'),
+      [d.source.system, d.source.agent].filter(Boolean).join(' · '),
+    ),
   );
 }
 
 function card(d) {
+  const open = () => {
+    state.openId = d.id;
+    state.other = '';
+    render();
+  };
   return h(
     'div',
     {
-      class: `card link${d.urgency === 'urgent' ? ' urgent' : ''}`,
+      class: `card link${d.urgency === 'urgent' ? ' urgent' : ''}${d.status === 'open' && !d.answer ? ' needs-you' : ''}`,
       'data-id': d.id,
-      onclick: () => {
-        state.openId = d.id;
-        state.other = '';
-        render();
+      role: 'button',
+      tabindex: '0',
+      onclick: open,
+      onkeydown: (e) => {
+        if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        open();
       },
     },
-    h('h2', {}, d.glance.title),
-    h('p', { class: 'question' }, d.glance.question),
-    tags(d),
-    h('div', { class: 'live-banner', 'data-decision': d.id }),
+    h(
+      'div',
+      { class: 'card-body' },
+      tags(d),
+      h('h2', {}, d.glance.title),
+      h('p', { class: 'question' }, d.glance.question),
+      h('div', { class: 'live-banner', 'data-decision': d.id }),
+    ),
+    icon('chevron-right', 'card-go'),
   );
 }
 
 function banner(d) {
   const b = answerBanner(d.answer, now());
   if (!b) return null;
+  const icons = {
+    undo: 'clock',
+    sending: 'send',
+    done: 'check',
+    held: 'alert',
+    stale: 'stale',
+    failed: 'close',
+  };
+  // Draining bar for the undo window: starts at the fraction left now and empties when it ends.
+  let meter = null;
+  if (b.kind === 'undo') {
+    const end = new Date(d.answer.deliver_after).getTime();
+    const total = Math.max(1, end - new Date(d.answer.answered_at).getTime());
+    const left = Math.max(0, end - now());
+    meter = h(
+      'div',
+      { class: 'meter', 'aria-hidden': 'true' },
+      h('div', {
+        class: 'meter-fill',
+        style: `--from: ${Math.min(1, left / total).toFixed(4)}; --left: ${left}ms`,
+      }),
+    );
+  }
   return h(
     'div',
     { class: `banner ${b.kind}`, 'data-banner': b.kind },
-    h('span', {}, b.text),
+    h('span', { class: 'banner-text' }, b.text),
+    icon(icons[b.kind] ?? 'alert', 'banner-icon'),
     b.canUndo &&
       h(
         'button',
@@ -204,8 +267,10 @@ function banner(d) {
             void act(`/v1/decisions/${d.id}/undo`);
           },
         },
+        icon('undo', 'sm'),
         'Undo',
       ),
+    meter,
   );
 }
 
@@ -213,25 +278,51 @@ function evidence(d) {
   if (!d.evidence.length && !d.tried) return null;
   return h(
     'details',
-    {},
-    h('summary', {}, 'Technical evidence'),
-    d.tried && h('p', {}, `Already tried: ${d.tried}`),
-    d.evidence.map((ev) => {
-      const url = ev.url && safeUrl(ev.url);
-      return h(
-        'div',
-        {},
-        url
-          ? h('a', { href: url, target: '_blank', rel: 'noopener noreferrer' }, ev.label)
-          : ev.label,
-        ev.text && h('pre', {}, ev.text),
-      );
-    }),
+    { class: 'evidence' },
+    h(
+      'summary',
+      {},
+      icon('evidence', 'sm'),
+      h('span', {}, 'Technical evidence'),
+      h('span', { class: 'evidence-count' }, String(d.evidence.length)),
+      icon('chevron-down', 'sm disclosure'),
+    ),
     h(
       'div',
-      { class: 'meta' },
-      `Resources: ${d.resources.join(', ') || 'none'} · fingerprint source: ${d.source.ref}`,
+      { class: 'evidence-body' },
+      d.tried && h('p', {}, h('span', { class: 'label inline' }, 'Already tried'), d.tried),
+      d.evidence.map((ev) => {
+        const url = ev.url && safeUrl(ev.url);
+        return h(
+          'div',
+          { class: 'evidence-item' },
+          url
+            ? h('a', { href: url, target: '_blank', rel: 'noopener noreferrer' }, ev.label)
+            : h('span', { class: 'evidence-label' }, ev.label),
+          ev.text && h('pre', {}, ev.text),
+        );
+      }),
+      h(
+        'div',
+        { class: 'meta' },
+        `Resources: ${d.resources.join(', ') || 'none'} · fingerprint source: ${d.source.ref}`,
+      ),
     ),
+  );
+}
+
+function backButton() {
+  return h(
+    'button',
+    {
+      class: 'back',
+      onclick: () => {
+        state.openId = null;
+        render();
+      },
+    },
+    icon('back', 'sm'),
+    'Back',
   );
 }
 
@@ -241,122 +332,169 @@ function detail(d) {
   const stale = d.freshness.stale;
   return h(
     'div',
-    {},
+    { class: 'detail' },
+    backButton(),
     h(
-      'button',
+      'article',
       {
-        class: 'back',
-        onclick: () => {
-          state.openId = null;
-          render();
-        },
+        class: `panel decision${d.urgency === 'urgent' ? ' urgent' : ''}${canAnswer ? ' emph needs-you' : ''}`,
       },
-      '← Back',
-    ),
-    h('h2', {}, d.glance.title),
-    tags(d),
-    h('p', { class: 'impact' }, d.impact),
-    banner(d),
-    d.status_reason && h('div', { class: 'banner stale' }, d.status_reason),
-    canAnswer &&
-      d.options.map((o) =>
+      tags(d),
+      h('h2', { class: 'detail-title' }, d.glance.title),
+      label('Impact'),
+      h('p', { class: 'impact' }, d.impact),
+      banner(d),
+      d.status_reason &&
+        h('div', { class: 'banner stale' }, h('span', {}, d.status_reason), icon('stale')),
+      canAnswer && label('Your call'),
+      canAnswer &&
         h(
-          'button',
-          {
-            class: `btn option${o.id === d.recommended ? ' primary' : ''}`,
-            disabled: state.busy,
-            'data-option': o.id,
-            onclick: () => act(`/v1/decisions/${d.id}/answer`, { option_id: o.id }),
-          },
+          'div',
+          { class: 'options' },
+          d.options.map((o) =>
+            h(
+              'button',
+              {
+                class: `btn option${o.id === d.recommended ? ' primary' : ''}`,
+                disabled: state.busy,
+                'data-option': o.id,
+                onclick: () => act(`/v1/decisions/${d.id}/answer`, { option_id: o.id }),
+              },
+              icon('chevron-right', 'sm cursor'),
+              h(
+                'span',
+                { class: 'option-text' },
+                h(
+                  'span',
+                  { class: 'label' },
+                  o.label,
+                  o.id === d.recommended &&
+                    h('span', { class: 'rec' }, icon('star', 'sm'), 'Recommended'),
+                ),
+                h(
+                  'span',
+                  { class: 'outcome' },
+                  o.outcome + (o.writes ? ' (changes something)' : ''),
+                ),
+              ),
+            ),
+          ),
+        ),
+      canAnswer &&
+        d.allow_other &&
+        h(
+          'div',
+          { class: 'other' },
+          h('label', { class: 'label', for: 'other-text' }, icon('other', 'sm'), 'Other'),
+          h(
+            'textarea',
+            {
+              id: 'other-text',
+              rows: 2,
+              placeholder: 'Other: tell the agent what to do instead',
+              oninput: (e) => {
+                state.other = e.target.value;
+              },
+            },
+            state.other,
+          ),
+          h(
+            'div',
+            { class: 'row' },
+            h(
+              'button',
+              {
+                class: 'btn small',
+                disabled: state.busy,
+                onclick: () =>
+                  state.other.trim() &&
+                  act(`/v1/decisions/${d.id}/answer`, { other_text: state.other.trim() }),
+              },
+              icon('send', 'sm'),
+              'Send other answer',
+            ),
+          ),
+        ),
+      left != null &&
+        d.status === 'open' &&
+        h(
+          'div',
+          { class: 'meta default' },
+          icon('clock', 'sm'),
           h(
             'span',
-            { class: 'label' },
-            o.label,
-            o.id === d.recommended && h('span', { class: 'rec' }, 'Recommended'),
+            { 'data-default': '' },
+            `If you don't answer, "${d.options.find((o) => o.id === d.default.option)?.label ?? d.default.option}" happens in ${formatCountdown(left)}`,
           ),
-          h('span', { class: 'outcome' }, o.outcome + (o.writes ? ' (changes something)' : '')),
         ),
-      ),
-    canAnswer &&
-      d.allow_other &&
       h(
         'div',
-        {},
+        { class: `meta fresh${stale ? ' stale' : ''}`, 'data-fresh': '' },
+        icon(stale ? 'stale' : 'live', 'sm'),
+        `checked ${formatAge(d.freshness.age_seconds)} ago`,
         h(
-          'textarea',
-          {
-            rows: 2,
-            placeholder: 'Other: tell the agent what to do instead',
-            oninput: (e) => {
-              state.other = e.target.value;
-            },
-          },
-          state.other,
+          'button',
+          { class: 'btn small', onclick: () => act(`/v1/decisions/${d.id}/refresh`) },
+          icon('refresh', 'sm'),
+          'Refresh',
         ),
+      ),
+      ['stale', 'failed', 'queued'].includes(d.status) &&
         h(
           'div',
           { class: 'row' },
           h(
             'button',
-            {
-              class: 'btn small',
-              disabled: state.busy,
-              onclick: () =>
-                state.other.trim() &&
-                act(`/v1/decisions/${d.id}/answer`, { other_text: state.other.trim() }),
-            },
-            'Send other answer',
+            { class: 'btn small', onclick: () => act(`/v1/decisions/${d.id}/reask`) },
+            icon('agent', 'sm'),
+            'Ask the agent again',
+          ),
+          h(
+            'button',
+            { class: 'btn small danger', onclick: () => act(`/v1/decisions/${d.id}/withdraw`) },
+            icon('close', 'sm'),
+            'Withdraw',
           ),
         ),
-      ),
-    left != null &&
-      d.status === 'open' &&
-      h(
-        'div',
-        { class: 'meta', 'data-default': '' },
-        `If you don't answer, "${d.options.find((o) => o.id === d.default.option)?.label ?? d.default.option}" happens in ${formatCountdown(left)}`,
-      ),
-    h(
-      'div',
-      { class: `meta${stale ? ' stale' : ''}`, 'data-fresh': '' },
-      `checked ${formatAge(d.freshness.age_seconds)} ago`,
-      h(
-        'button',
-        { class: 'btn small', onclick: () => act(`/v1/decisions/${d.id}/refresh`) },
-        'Refresh',
-      ),
+      evidence(d),
     ),
-    ['stale', 'failed', 'queued'].includes(d.status) &&
-      h(
-        'div',
-        { class: 'row' },
-        h(
-          'button',
-          { class: 'btn small', onclick: () => act(`/v1/decisions/${d.id}/reask`) },
-          'Ask the agent again',
-        ),
-        h(
-          'button',
-          { class: 'btn small', onclick: () => act(`/v1/decisions/${d.id}/withdraw`) },
-          'Withdraw',
-        ),
-      ),
-    evidence(d),
+  );
+}
+
+/** Pixel illustration (two inks) from tokens.css. Decorative. */
+const illo = (name) => h('span', { class: `illo illo-${name}`, 'aria-hidden': 'true' });
+
+function emptyState(iconName, title, text) {
+  return h(
+    'div',
+    { class: 'empty' },
+    iconName === 'inbox' ? illo('empty') : icon(iconName, 'lg'),
+    pixelHeading(title, 'p'),
+    h('p', {}, text),
   );
 }
 
 function updatesView() {
-  if (!state.updates.length) return h('p', { class: 'empty' }, 'No updates yet.');
-  return state.updates.map((u) =>
-    h(
-      'div',
-      { class: 'update' },
-      h('strong', {}, u.title),
-      u.body && h('div', {}, u.body),
+  if (!state.updates.length) return emptyState('updates', 'Quiet', 'No updates yet.');
+  return h(
+    'ol',
+    { class: 'updates' },
+    state.updates.map((u) =>
       h(
-        'small',
-        {},
-        `${u.source_system} · ${u.project ? u.project + ' · ' : ''}${new Date(u.created_at).toLocaleString()}`,
+        'li',
+        { class: 'update' },
+        icon('updates', 'sm'),
+        h(
+          'div',
+          {},
+          h('strong', {}, u.title),
+          u.body && h('div', {}, u.body),
+          h(
+            'small',
+            {},
+            `${u.source_system} · ${u.project ? u.project + ' · ' : ''}${new Date(u.created_at).toLocaleString()}`,
+          ),
+        ),
       ),
     ),
   );
@@ -364,9 +502,12 @@ function updatesView() {
 
 function loginView() {
   const input = h('input', {
+    id: 'token',
     type: 'password',
     placeholder: 'Device token',
     autocomplete: 'current-password',
+    'aria-describedby': 'token-help',
+    'aria-invalid': state.error ? 'true' : false,
   });
   const go = () => {
     const t = input.value.trim();
@@ -379,13 +520,25 @@ function loginView() {
   input.addEventListener('keydown', (e) => e.key === 'Enter' && go());
   return h(
     'div',
-    {},
-    h('p', {}, 'Enter your device token. It stays in this browser only.'),
+    { class: 'panel login emph' },
+    h('div', { class: 'login-head' }, illo('signin'), pixelHeading('Sign in')),
+    h('label', { class: 'label', for: 'token' }, 'Device token'),
     input,
-    state.error && h('p', { class: 'err' }, state.error),
-    h('div', { class: 'row' }, h('button', { class: 'btn primary small', onclick: go }, 'Sign in')),
+    h(
+      'p',
+      { id: 'token-help', class: 'help' },
+      'Enter your device token. It stays in this browser only.',
+    ),
+    state.error && h('p', { class: 'err', role: 'alert' }, icon('alert', 'sm'), state.error),
+    h(
+      'div',
+      { class: 'row' },
+      h('button', { class: 'btn primary small', onclick: go }, icon('key', 'sm'), 'Sign in'),
+    ),
   );
 }
+
+const TAB_TITLES = { inbox: 'Inbox', repair: 'Stale & conflicts', updates: 'Updates' };
 
 function render() {
   const view = $('#view');
@@ -396,9 +549,19 @@ function render() {
   mode.textContent = 'Dry-run mode: answers are held and logged, not written to sources.';
   $('#count-inbox').textContent = state.inbox.length || '';
   $('#count-repair').textContent = state.repair.length || '';
+  setPixelText($('#hud-count'), signedIn ? String(state.inbox.length).padStart(2, '0') : '--', {
+    scale: 3,
+  });
   document
     .querySelectorAll('#tabs button')
     .forEach((b) => b.classList.toggle('active', b.dataset.tab === state.tab));
+  document
+    .querySelectorAll('#tabs button')
+    .forEach((b) =>
+      b.dataset.tab === state.tab
+        ? b.setAttribute('aria-current', 'page')
+        : b.removeAttribute('aria-current'),
+    );
 
   let content;
   if (!signedIn) content = loginView();
@@ -408,37 +571,57 @@ function render() {
       ? detail(d)
       : h(
           'div',
-          {},
-          h(
-            'button',
-            {
-              class: 'back',
-              onclick: () => {
-                state.openId = null;
-                render();
-              },
-            },
-            '← Back',
-          ),
-          h('p', { class: 'empty' }, 'This decision is no longer waiting on you.'),
+          { class: 'detail' },
+          backButton(),
+          emptyState('inbox', 'Closed', 'This decision is no longer waiting on you.'),
         );
-  } else if (state.tab === 'updates') content = updatesView();
-  else {
-    const list = state.tab === 'repair' ? state.repair : state.inbox;
-    content = list.length
-      ? list.map(card)
-      : h(
-          'p',
-          { class: 'empty' },
-          state.tab === 'repair' ? 'Nothing stale or in conflict.' : 'Nothing is waiting on you.',
-        );
+  } else {
+    const list =
+      state.tab === 'repair' ? state.repair : state.tab === 'inbox' ? state.inbox : state.updates;
+    const head = h(
+      'div',
+      { class: 'view-head' },
+      pixelHeading(TAB_TITLES[state.tab]),
+      h(
+        'span',
+        { class: 'label' },
+        `${list.length} ${state.tab === 'updates' ? 'recent' : 'waiting'}`,
+      ),
+    );
+    if (state.tab === 'updates') content = [head, updatesView()];
+    else
+      content = [
+        head,
+        list.length
+          ? h('div', { class: 'list' }, list.map(card))
+          : state.tab === 'repair'
+            ? emptyState('stale', 'All fresh', 'Nothing stale or in conflict.')
+            : emptyState('inbox', 'All clear', 'Nothing is waiting on you.'),
+      ];
   }
   view.replaceChildren(
-    ...[state.error && signedIn ? h('p', { class: 'err' }, state.error) : null, content]
+    ...[
+      state.error && signedIn
+        ? h('p', { class: 'err', role: 'alert' }, icon('alert', 'sm'), state.error)
+        : null,
+      content,
+    ]
       .flat()
       .filter(Boolean),
   );
   tick();
+}
+
+/** HUD clock and date. Local time, display only. */
+function clock() {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  setPixelText($('#clock'), `${hh}:${mm}`, { scale: 2 });
+  setPixelText($('#hud-clock'), `${hh}:${mm}`, { scale: 7, dot: 0.78 });
+  const day = d.toLocaleDateString('en-US', { weekday: 'short' });
+  const month = d.toLocaleDateString('en-US', { month: 'short' });
+  setPixelText($('#hud-date'), `${day} ${d.getDate()} ${month}`, { scale: 2 });
 }
 
 /** Updates countdown text in place every second without rebuilding (and losing focus in) the page. */
@@ -473,6 +656,7 @@ document.querySelectorAll('#tabs button').forEach((b) =>
 );
 
 function start() {
+  clock();
   render();
   if (state.token) {
     void refresh();
@@ -481,6 +665,8 @@ function start() {
 }
 
 setInterval(tick, 1000);
+setInterval(clock, 1000);
+setPixelText($('#wordmark'), 'NOD', { scale: 3 });
 start();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => undefined);
