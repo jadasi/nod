@@ -34,6 +34,7 @@ describe('web inbox hosting', () => {
     expect(page.status).toBe(200);
     expect(page.headers.get('content-type')).toContain('text/html');
     expect(page.headers.get('content-security-policy')).toContain("default-src 'self'");
+    expect(page.headers.get('content-security-policy')).toContain("font-src 'self'");
     expect(await page.text()).toContain('<title>Nod</title>');
     for (const [path, type] of [
       ['/app.js', 'javascript'],
@@ -41,6 +42,7 @@ describe('web inbox hosting', () => {
       ['/style.css', 'text/css'],
       ['/sw.js', 'javascript'],
       ['/manifest.webmanifest', 'manifest+json'],
+      ['/fonts/space-grotesk-latin-wght-normal.woff2', 'font/woff2'],
     ] as const) {
       const res = await fetch(`${base}${path}`);
       expect(res.status, path).toBe(200);
