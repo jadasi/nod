@@ -13,12 +13,27 @@ interface Config {
   paperclipBaseUrl?: string;
 }
 
-async function build(ctx: PluginContext): Promise<ApprovalSync> {
-  const cfg = (await ctx.config.get()) as unknown as Config;
-  if (!cfg.nodUrl || !cfg.agentToken || !cfg.boardUserId) {
+/**
+ * Config and secrets are company-scoped in Paperclip. Scheduled jobs carry no company context, so
+ * the company is always passed explicitly: a bare `config.get()` is denied there ("company context
+ * is required") and the job never runs.
+ */
+async function loadConfig(ctx: PluginContext, companyId: string): Promise<Config | null> {
+  try {
+    const cfg = (await ctx.config.get(companyId)) as unknown as Config | null;
+    return cfg && Object.keys(cfg).length > 0 ? cfg : null;
+  } catch {
+    // The host refuses config for companies the plugin has no settings for.
+    return null;
+  }
+}
+
+async function build(ctx: PluginContext, companyId: string): Promise<ApprovalSync> {
+  const cfg = await loadConfig(ctx, companyId);
+  if (!cfg || !cfg.nodUrl || !cfg.agentToken || !cfg.boardUserId) {
     throw new Error('Nod plugin is not configured (nodUrl, agentToken, boardUserId)');
   }
-  const token = await ctx.secrets.resolve(cfg.agentToken as never);
+  const token = await ctx.secrets.resolve(cfg.agentToken as never, { companyId });
   const scope = (stateKey: string) => ({ scopeKind: 'instance' as const, stateKey });
   return new ApprovalSync({
     nod: new NodClient(cfg.nodUrl, token, (url, init) => ctx.http.fetch(url, init)),
@@ -47,17 +62,30 @@ const plugin = definePlugin({
     // Events are the fast path; the job below is the safety net for anything missed.
     ctx.events.on('approval.created', async (event) => {
       const a = await ctx.approvals.get(event.entityId ?? '', event.companyId);
-      if (a) await (await build(ctx)).onApproval(a as ApprovalLike);
+      if (a) await (await build(ctx, event.companyId)).onApproval(a as ApprovalLike);
     });
     ctx.events.on('approval.decided', async (event) => {
       const a = await ctx.approvals.get(event.entityId ?? '', event.companyId);
-      if (a) await (await build(ctx)).onDecided(a as ApprovalLike);
+      if (a) await (await build(ctx, event.companyId)).onDecided(a as ApprovalLike);
     });
     ctx.jobs.register(POLL_JOB, async () => {
-      const sync = await build(ctx);
-      const companies = await ctx.companies.list();
-      await sync.sweep(companies.map((c) => c.id));
-      await sync.poll();
+      const failures: string[] = [];
+      for (const company of await ctx.companies.list()) {
+        // Companies this plugin has no settings for are expected; skip them quietly.
+        if (!(await loadConfig(ctx, company.id))) {
+          ctx.logger.debug('Nod sync skipped: company has no settings', { companyId: company.id });
+          continue;
+        }
+        try {
+          const sync = await build(ctx, company.id);
+          await sync.sweep([company.id]);
+          await sync.poll(company.id);
+        } catch (e) {
+          failures.push(`${company.id}: ${String(e)}`);
+        }
+      }
+      // Fail the run (visible in job history) rather than reporting success after doing nothing.
+      if (failures.length > 0) throw new Error(`Nod sync failed for ${failures.join('; ')}`);
     });
   },
 });

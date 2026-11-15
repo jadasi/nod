@@ -161,14 +161,18 @@ export class ApprovalSync {
     }
   }
 
-  /** Check every open decision for an answer, and apply the ones that are ready. */
-  async poll(): Promise<void> {
+  /**
+   * Check every open decision for an answer, and apply the ones that are ready. With `companyId`,
+   * only that company's decisions (each company has its own Nod config).
+   */
+  async poll(companyId?: string): Promise<void> {
     for (const approvalId of await this.openIds()) {
       const l = await this.link(approvalId);
       if (!l) {
         await this.forget(approvalId);
         continue;
       }
+      if (companyId !== undefined && l.companyId !== companyId) continue;
       try {
         await this.pollOne(l);
       } catch (e) {
