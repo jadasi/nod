@@ -199,6 +199,21 @@ describe('ApprovalSync', () => {
     expect(approvals.decisions).toHaveLength(1);
   });
 
+  it("poll(companyId) only touches that company's decisions", async () => {
+    const { nod, approvals, sync } = setup();
+    const a = approval();
+    approvals.store.set(a.id, a);
+    await sync.onApproval(a);
+    nod.results.set('d-1', {
+      state: 'delivered',
+      answer: { option_id: 'approve', other_text: null, fingerprint: fingerprintOf(a) },
+    });
+    await sync.poll('co-2');
+    expect(approvals.decisions).toHaveLength(0);
+    await sync.poll('co-1');
+    expect(approvals.decisions).toHaveLength(1);
+  });
+
   it('maps Reject to a rejection', async () => {
     const { nod, approvals, sync } = setup();
     const a = approval();
