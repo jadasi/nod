@@ -5,16 +5,19 @@ export const POLL_JOB = 'sync-nod';
 const manifest: PaperclipPluginManifestV1 = {
   id: 'nod.decision-router',
   apiVersion: 1,
-  version: '0.1.0',
+  version: '0.2.0',
   displayName: 'Nod',
   description:
-    'Sends board approvals to Nod, where they can be answered from a phone, and writes the answer back after an undo window.',
+    'Sends board approvals and issue confirmations to Nod, where they can be answered from a phone, and writes the answer back after an undo window.',
   author: 'Nod',
   categories: ['connector'],
   capabilities: [
     'companies.read',
     'approvals.read',
     'approvals.respond',
+    'issues.read',
+    'issue.interactions.read',
+    'issue.interactions.respond',
     'events.subscribe',
     'jobs.schedule',
     'http.outbound',
@@ -47,7 +50,8 @@ const manifest: PaperclipPluginManifestV1 = {
     {
       jobKey: POLL_JOB,
       displayName: 'Sync with Nod',
-      description: 'Re-sends missed approvals, applies answers whose undo window has passed.',
+      description:
+        'Re-sends missed approvals, finds new issue confirmations, applies answers whose undo window has passed.',
       schedule: '* * * * *',
     },
   ],

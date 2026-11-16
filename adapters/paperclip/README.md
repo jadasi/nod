@@ -1,12 +1,22 @@
 # @david_osco/nod-paperclip-plugin
 
-A Paperclip plugin that sends board approvals to Nod and writes David's answers back.
+A Paperclip plugin that sends board approvals and issue confirmations to Nod and writes David's answers back.
 
 ## How it works
 
 1. `approval.created` (and a one-minute catch-up job) sends each pending approval to Nod core as a decision (`source.system = "paperclip"`, `fingerprint = status + updatedAt`).
 2. Nod holds the answer through the undo window. Paperclip is a _passive_ source in core, so the plugin does the compare-and-swap itself: when core reports the answer delivered, the plugin re-reads the approval and calls `approvals.decide` only if the fingerprint still matches.
 3. If the approval is decided, revised or resubmitted in Paperclip while the card is open, the plugin withdraws the card.
+
+## Issue confirmations
+
+Agents mostly ask David for things as yes/no confirmation cards on issues (`request_confirmation`), not as board approvals. Paperclip announces no event for them, so each minute the sync job lists the interactions of every open issue (todo, in progress, in review, blocked) in each configured company, and sends the pending ones. A new card can take up to a minute to appear. Answers use the same undo window and fingerprint check as approvals; a decline records a note that it came from Nod.
+
+These stay in Paperclip and never appear in Nod: confirmations that run a tool, grant a secret or connect an account; ones that require a written reason to decline; ones addressed to someone else or dismissed; ones waiting on workspace preparation; and every other question type (multiple choice, free text, checkbox, per-item verdicts).
+
+Companies with no plugin settings send nothing. Upgrading from 0.1.x adds three permissions (`issues.read`, `issue.interactions.read`, `issue.interactions.respond`), so Paperclip puts the plugin in "upgrade pending" until the operator approves them.
+
+## Approvals
 
 Supported types: `request_board_approval`, `hire_agent`, `approve_ceo_strategy`. `budget_override_required` is skipped (Paperclip only resolves it from the Costs page).
 

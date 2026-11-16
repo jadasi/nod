@@ -1,7 +1,7 @@
 {
   "name": "@david_osco/nod-paperclip-plugin",
-  "version": "0.1.0",
-  "description": "Paperclip plugin: turns board approvals into Nod decisions and writes David's answers back.",
+  "version": "0.2.0",
+  "description": "Paperclip plugin: turns board approvals and issue confirmations into Nod decisions and writes David's answers back.",
   "type": "module",
   "main": "dist/worker.js",
   "scripts": {
