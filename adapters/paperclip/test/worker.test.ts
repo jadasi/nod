@@ -112,6 +112,18 @@ describe('worker', () => {
     expect(sent).toMatchObject({ kind: 'confirmation', issueId: 'is-1', companyId: 'co-1' });
   });
 
+  it('still applies answers, and fails the run, when confirmations cannot be read', async () => {
+    const h = harness();
+    h.ctx.issues.list = async () => {
+      throw new Error('capability denied: issues.read');
+    };
+    await plugin.definition.setup(h.ctx as never);
+    await expect(h.jobs.get('sync-nod')!()).rejects.toThrow(/issues\.read/);
+    // The approval was sent and its answer was checked despite the failure.
+    expect(h.fetched.map((f) => f.url)).toContain('https://nod.test/v1/agent/decisions');
+    expect(h.fetched.some((f) => f.url.includes('/await'))).toBe(true);
+  });
+
   it('fails the job run instead of reporting success when a configured company is broken', async () => {
     const h = harness();
     h.configs['co-1'] = { nodUrl: 'https://nod.test' }; // token and board user missing

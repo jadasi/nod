@@ -201,6 +201,24 @@ describe('confirmation sync', () => {
     expect(nod.submitted).toHaveLength(1);
   });
 
+  it('fails the sweep, after finishing the rest, when confirmations cannot be read', async () => {
+    const { nod, confirmations, approvals, sync } = setup();
+    approvals.push({
+      id: 'ap-1',
+      companyId: 'co-1',
+      type: 'request_board_approval',
+      status: 'pending',
+      payload: { title: 'Approve the thing' },
+      updatedAt: new Date('2026-11-15T17:00:00Z'),
+    });
+    confirmations.listPending = async () => {
+      throw new Error('capability denied: issues.read');
+    };
+    await expect(sync.sweep(['co-1'])).rejects.toThrow(/issues\.read/);
+    // The approval was still sent.
+    expect(nod.submitted).toHaveLength(1);
+  });
+
   it('sends nothing for confirmations Nod cannot answer', async () => {
     const { nod, confirmations, sync } = setup();
     confirmations.store.set(

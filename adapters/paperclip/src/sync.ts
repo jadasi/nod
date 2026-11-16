@@ -223,6 +223,8 @@ export class ApprovalSync {
    * confirmations (Paperclip announces no event for them, so this is how they are found).
    */
   async sweep(companyIds: string[]): Promise<void> {
+    // Keep going so one failure doesn't hide the rest, then fail so the job run shows it.
+    const failures: string[] = [];
     for (const companyId of companyIds) {
       for (const a of await this.d.approvals.listPending(companyId)) {
         await this.onApproval(a).catch((e: unknown) =>
@@ -232,6 +234,7 @@ export class ApprovalSync {
       if (!this.d.confirmations) continue;
       const pending = await this.d.confirmations.listPending(companyId).catch((e: unknown) => {
         this.d.log.warn('sweep: could not list confirmations', { companyId, error: String(e) });
+        failures.push(`could not read confirmations for ${companyId}: ${String(e)}`);
         return [];
       });
       for (const { confirmation, issue } of pending) {
@@ -243,6 +246,7 @@ export class ApprovalSync {
         );
       }
     }
+    if (failures.length > 0) throw new Error(failures.join('; '));
   }
 
   /**

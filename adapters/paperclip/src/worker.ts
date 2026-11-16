@@ -161,8 +161,14 @@ const plugin = definePlugin({
         }
         try {
           const sync = await build(ctx, company.id);
-          await sync.sweep([company.id]);
-          await sync.poll(company.id);
+          // Independent steps: a problem finding new items must not stop answers being applied.
+          for (const step of [() => sync.sweep([company.id]), () => sync.poll(company.id)]) {
+            try {
+              await step();
+            } catch (e) {
+              failures.push(`${company.id}: ${String(e)}`);
+            }
+          }
         } catch (e) {
           failures.push(`${company.id}: ${String(e)}`);
         }
