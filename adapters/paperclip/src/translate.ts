@@ -12,11 +12,13 @@ export interface ApprovalLike {
 }
 
 export type PaperclipAction = 'approve' | 'reject';
+/** What Nod's answer does to a Paperclip item: approvals approve/reject, confirmations accept/reject. */
+export type ItemAction = PaperclipAction | 'accept';
 
 export interface TranslatedApproval {
   request: DecisionRequest;
   /** Which Paperclip action each Nod option id performs. */
-  actions: Record<string, PaperclipAction>;
+  actions: Record<string, ItemAction>;
   /** Labels, so write-back notes say what David chose. */
   labels: Record<string, string>;
 }
@@ -34,6 +36,45 @@ export function isHandled(a: Pick<ApprovalLike, 'type' | 'status'>): boolean {
 /** Opaque precondition token: changes when the approval is decided, revised or resubmitted. */
 export function fingerprintOf(a: Pick<ApprovalLike, 'status' | 'updatedAt'>): string {
   return `${a.status}:${new Date(a.updatedAt).toISOString()}`;
+}
+
+/** The parts of a Paperclip issue-thread interaction this adapter reads. */
+export interface ConfirmationLike {
+  id: string;
+  companyId: string;
+  issueId: string;
+  kind: string;
+  status: string;
+  payload: Record<string, unknown>;
+  updatedAt: Date | string;
+  title?: string | null;
+  addresseeUserId?: string | null;
+  dismissedAt?: Date | string | null;
+  acceptanceBlocker?: string | null;
+}
+
+/** The issue a confirmation sits on, for the card's title and link. */
+export interface IssueRef {
+  id: string;
+  identifier?: string | null;
+  title?: string | null;
+}
+
+/**
+ * Only plain yes/no confirmations. Anything that runs a tool, grants a secret or connects an account
+ * carries more authority than a phone tap; a decline that needs a written reason can't be answered
+ * (Nod offers no free text); and cards addressed to someone else, dismissed, or not yet acceptable
+ * are not David's to answer from here.
+ */
+export function isHandledConfirmation(c: ConfirmationLike, actorUserId: string): boolean {
+  if (c.kind !== 'request_confirmation' || c.status !== 'pending') return false;
+  const p = c.payload ?? {};
+  if (p.toolAction || p.secretProposal || p.connectionAuthorization) return false;
+  if (p.rejectRequiresReason === true) return false;
+  if (c.addresseeUserId && c.addresseeUserId !== actorUserId) return false;
+  if (c.dismissedAt) return false;
+  if (c.acceptanceBlocker) return false;
+  return true;
 }
 
 function str(v: unknown): string | undefined {
@@ -83,7 +124,7 @@ export function translate(
       },
     ] as const);
 
-  const actions: Record<string, PaperclipAction> = {};
+  const actions: Record<string, ItemAction> = {};
   const labels: Record<string, string> = {};
   for (const o of options) {
     actions[o.id] = o.decision;
@@ -143,6 +184,68 @@ export function translate(
     ttl_seconds: opts.ttlSeconds,
   };
   return { request, actions, labels };
+}
+
+/** A plain yes/no confirmation as a Nod card: the agent is told yes or no. */
+export function translateConfirmation(
+  c: ConfirmationLike,
+  issue: IssueRef,
+  opts: { baseUrl?: string | undefined; ttlSeconds: number },
+): TranslatedApproval {
+  const p = c.payload;
+  const prompt = str(p.prompt) ?? str(c.title) ?? 'Confirmation needed';
+  const details = str(p.detailsMarkdown);
+  const acceptLabel = str(p.acceptLabel) ?? 'Confirm';
+  const rejectLabel = str(p.rejectLabel) ?? 'Decline';
+  const issueTitle = str(issue.title) ?? str(c.title) ?? 'Confirmation needed';
+  const title = issue.identifier ? `${issue.identifier}: ${issueTitle}` : issueTitle;
+  const fp = fingerprintOf(c);
+  const url =
+    opts.baseUrl && issue.identifier
+      ? `${opts.baseUrl.replace(/\/$/, '')}/${issue.identifier.split('-')[0]}/issues/${issue.identifier}`
+      : undefined;
+
+  const evidence: NonNullable<DecisionRequest['evidence']> = [];
+  if (url) evidence.push({ kind: 'link', label: 'Open in Paperclip', url });
+  if (details) evidence.push({ kind: 'text', label: 'Details', text: clip(details, 4000) });
+
+  const request: DecisionRequest = {
+    idempotency_key: `paperclip:confirmation:${c.id}:${fp}`,
+    source: { system: 'paperclip', ref: c.id, ...(url ? { url } : {}) },
+    provenance: { kind: 'internal' },
+    glance: { title: clip(title, 48), question: clip(prompt, 120) },
+    impact: clip(details ?? prompt, 600),
+    options: [
+      {
+        id: 'accept',
+        label: clip(acceptLabel, 20),
+        outcome: 'The agent is told yes and carries on.',
+        reversible: false,
+        writes: true,
+      },
+      {
+        id: 'reject',
+        label: clip(rejectLabel, 20),
+        outcome: 'The agent is told no and does not go ahead.',
+        reversible: false,
+        writes: false,
+      },
+    ] as DecisionRequest['options'],
+    recommended: 'accept',
+    fingerprint: fp,
+    resources: [`paperclip-interaction:${c.id}`],
+    // A decline note is the only text Paperclip takes through the plugin API; Nod offers none.
+    allow_other: false,
+    allow_call: true,
+    urgency: 'normal',
+    ...(evidence.length ? { evidence } : {}),
+    ttl_seconds: opts.ttlSeconds,
+  };
+  return {
+    request,
+    actions: { accept: 'accept', reject: 'reject' },
+    labels: { accept: acceptLabel, reject: rejectLabel },
+  };
 }
 
 function parseOptions(

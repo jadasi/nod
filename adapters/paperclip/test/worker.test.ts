@@ -17,11 +17,23 @@ const approval = {
   updatedAt: new Date('2026-11-13T18:00:00Z'),
 };
 
+const issueRow = { id: 'is-1', identifier: 'BYT-682', title: 'Karaoke player not visible' };
+const interaction = {
+  id: 'cf-1',
+  companyId: 'co-1',
+  issueId: 'is-1',
+  kind: 'request_confirmation',
+  status: 'pending',
+  payload: { version: 1, prompt: 'Did you publish Ps 90?' },
+  updatedAt: new Date('2026-11-15T18:00:00Z'),
+};
+
 function harness() {
   const jobs = new Map<string, () => Promise<void>>();
   const events = new Map<string, (e: { entityId?: string; companyId: string }) => Promise<void>>();
   const fetched: { url: string; auth: string | undefined }[] = [];
   const state = new Map<string, unknown>();
+  const responded: { id: string; input: unknown }[] = [];
   const configs: Record<string, Record<string, unknown>> = {
     'co-1': { nodUrl: 'https://nod.test', agentToken: { secretId: 's' }, boardUserId: 'u-1' },
   };
@@ -59,11 +71,21 @@ function harness() {
         return new Response(JSON.stringify(body), { status: 200 });
       },
     },
+    issues: {
+      list: async ({ companyId, status }: { companyId: string; status: string }) =>
+        companyId === 'co-1' && status === 'in_review' ? [issueRow] : [],
+      listInteractions: async (issueId: string, companyId: string) =>
+        issueId === 'is-1' && companyId === 'co-1' ? [interaction] : [],
+      respondInteraction: async (_i: string, id: string, input: unknown) => {
+        responded.push({ id, input });
+        return { applied: true };
+      },
+    },
     logger: { info() {}, warn() {}, debug() {}, error() {} },
     events: { on: (name: string, fn: never) => void events.set(name, fn) },
     jobs: { register: (key: string, fn: () => Promise<void>) => void jobs.set(key, fn) },
   };
-  return { ctx, jobs, events, fetched, state, configs };
+  return { ctx, jobs, events, fetched, state, configs, responded };
 }
 
 describe('worker', () => {
@@ -74,10 +96,20 @@ describe('worker', () => {
     // Sent the approval, then checked for an answer; co-2 (no settings) was skipped.
     expect(h.fetched.map((f) => f.url)).toEqual([
       'https://nod.test/v1/agent/decisions',
+      'https://nod.test/v1/agent/decisions',
+      'https://nod.test/v1/agent/decisions/d-1/await?wait=0',
       'https://nod.test/v1/agent/decisions/d-1/await?wait=0',
     ]);
     expect(h.fetched.every((f) => f.auth === 'Bearer tok')).toBe(true);
     expect(h.state.get('link:ap-1')).toMatchObject({ decisionId: 'd-1', companyId: 'co-1' });
+  });
+
+  it('the scheduled sync also sends open issue confirmations to Nod', async () => {
+    const h = harness();
+    await plugin.definition.setup(h.ctx as never);
+    await h.jobs.get('sync-nod')!();
+    const sent = h.state.get('link:cf-1');
+    expect(sent).toMatchObject({ kind: 'confirmation', issueId: 'is-1', companyId: 'co-1' });
   });
 
   it('fails the job run instead of reporting success when a configured company is broken', async () => {

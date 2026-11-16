@@ -123,7 +123,7 @@ See `packages/contract/decision.schema.json` for the authoritative schema. Key f
 
 - ~~Can Paperclip approval payloads carry `options[]`? Can plugins push events out, or must we poll/SSE?~~ **Resolved:** approval payloads are free-form JSON with no `options[]`, and the board can only approve, reject or request a revision, so Nod options map onto approve/reject (an optional `nod` block in the payload supplies custom labels and outcomes). Plugins receive `approval.created` / `approval.decided` events and can run scheduled jobs; the adapter uses events for speed and a one-minute job as the safety net.
 - Does GPT-Live-1 support in-app WebRTC sessions, or only SIP / server WebSocket? (Decides whether LiveKit is required.)
-- ~~How do Paperclip agents signal "blocked on human" — approval vs blocked issue?~~ **Resolved (David, 2026-11-13):** an approval. Issue-thread interactions (`ask_user_questions`) have native options and are a possible later addition.
+- ~~How do Paperclip agents signal "blocked on human" — approval vs blocked issue?~~ **Resolved (David, 2026-11-13):** an approval. Issue-thread interactions have native options and were left for later. **Update (David, 2026-11-15):** plain yes/no `request_confirmation` cards on open issues are now also sent to Nod, because that is how most blocking questions arrive in practice (spec `paperclip-confirmations`). Multiple-choice, free-text, checkbox and other interaction kinds remain later additions.
 - Even Hub SDK: mic/STT access and any network restrictions for calling our API.
 
 ## 9. Development process
