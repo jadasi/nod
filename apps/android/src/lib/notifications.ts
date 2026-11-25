@@ -107,9 +107,22 @@ export interface NotifyContext {
 /** The glance budget for the lenses: title 48, question 120. */
 export const BUDGET = { title: 48, question: 120 } as const;
 
-/** Fits text to a character budget, cutting with an ellipsis. */
+/**
+ * Fits text to a character budget, cutting with an ellipsis.
+ *
+ * The cut lands on a word boundary when one is close enough to the end.
+ * This text is read at a glance — on the lenses and on a heads-up
+ * notification — and a word broken in half costs a re-read, which is the
+ * one thing a glance cannot afford. A boundary further back than 70% of
+ * the budget would throw away more than it saves, so that falls back to a
+ * hard cut. Trailing punctuation goes with the cut word.
+ */
 export function fitBudget(text: string, max: number): string {
-  return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+  if (text.length <= max) return text;
+  const hard = text.slice(0, max - 1);
+  const lastSpace = hard.lastIndexOf(' ');
+  const body = lastSpace >= Math.floor((max - 1) * 0.7) ? hard.slice(0, lastSpace) : hard;
+  return `${body.replace(/[\s,;:.–—-]+$/, '')}…`;
 }
 
 /** Options for a decision, recommended first (for the top-2 actions). */

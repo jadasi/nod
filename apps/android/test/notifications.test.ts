@@ -33,6 +33,19 @@ describe('fitBudget', () => {
     expect(fit.length).toBe(BUDGET.title);
     expect(fit.endsWith('…')).toBe(true);
   });
+
+  it('cuts on a word boundary so the lenses never show half a word', () => {
+    const long = 'Approve the quarterly infrastructure budget increase for the billing cluster';
+    const fit = fitBudget(long, BUDGET.title);
+    expect(fit.length).toBeLessThanOrEqual(BUDGET.title);
+    expect(fit).toBe('Approve the quarterly infrastructure budget…');
+  });
+
+  it('falls back to a hard cut when the nearest boundary is too far back', () => {
+    const fit = fitBudget(`short ${'x'.repeat(60)}`, BUDGET.title);
+    expect(fit.length).toBe(BUDGET.title);
+    expect(fit.endsWith('…')).toBe(true);
+  });
 });
 
 describe('planForDecision', () => {
