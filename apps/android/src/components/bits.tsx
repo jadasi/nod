@@ -1,156 +1,145 @@
 /**
- * PROVISIONAL UI — functional placeholder, owned by Designer (BYT-753).
- * Small shared primitives, built from the Phosphor tokens only: tags,
- * status banners, filter chips, settings rows and the empty state.
+ * List groups, section heads and the empty state.
+ *
+ * Settings is a stack of grouped panels rather than a flat list of rows:
+ * common region does the grouping work, so the rows themselves can stay
+ * quiet (Gestalt — common region and uniform connectedness).
  */
-import type { ColorToken } from '@nod/design-tokens';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useColors } from '@/theme.js';
-import { PixelText } from './pixel';
+import { Pressable, Switch, View } from 'react-native';
+import { tokens } from '@nod/design-tokens';
+import { border, radius, space, useColors } from '@/theme.js';
+import { PixelIcon, PixelIllustration, PixelText, type IconName } from './pixel';
+import { Button, Divider, Label, T } from './ui';
 
-export type TagTone = 'urgent' | 'external' | 'write' | 'accent' | 'dim';
-
-const TONE_COLORS: Record<TagTone, { fg: ColorToken; bg?: ColorToken }> = {
-  urgent: { fg: 'onRed', bg: 'red' },
-  external: { fg: 'amber', bg: 'amberDeep' },
-  write: { fg: 'amber', bg: 'amberDeep' },
-  accent: { fg: 'accentInk', bg: 'accentDeep' },
-  dim: { fg: 'textDim' },
-};
-
-export function Tag({ tone, children }: { tone: TagTone; children: ReactNode }) {
+/** The uppercase group heading above a settings panel. */
+export function SectionHead({ title, meta }: { title: string; meta?: string }) {
   const colors = useColors();
-  const t = TONE_COLORS[tone];
   return (
     <View
       style={{
         flexDirection: 'row',
-        alignSelf: 'flex-start',
-        paddingVertical: 2,
-        paddingHorizontal: 6,
-        ...(t.bg ? { backgroundColor: colors[t.bg] } : {}),
+        alignItems: 'flex-end',
+        gap: space[3],
+        marginTop: space[5],
+        marginBottom: space[2],
       }}
     >
-      <Text
-        style={{ color: colors[t.fg], fontSize: 11, fontWeight: '600', textTransform: 'uppercase' }}
-      >
-        {children}
-      </Text>
+      <View style={{ flex: 1 }}>
+        <Label>{title}</Label>
+      </View>
+      {meta ? (
+        <T step="label" color={colors.textFaint} weight="600">
+          {meta}
+        </T>
+      ) : null}
     </View>
   );
 }
 
-export type BannerKind = 'undo' | 'sending' | 'held' | 'done' | 'stale' | 'failed';
-
-const BANNER_COLORS: Record<BannerKind, { fg: ColorToken; bg?: ColorToken }> = {
-  undo: { fg: 'accentInk', bg: 'accentDeep' },
-  sending: { fg: 'accentInk', bg: 'accentDeep' },
-  held: { fg: 'amber', bg: 'amberDeep' },
-  done: { fg: 'accentInk', bg: 'accentDeep' },
-  stale: { fg: 'red', bg: 'redDeep' },
-  failed: { fg: 'red', bg: 'redDeep' },
-};
-
-export function StatusBanner({ kind, children }: { kind: BannerKind; children: ReactNode }) {
+/** A bordered group; rows inside are separated by hairlines. */
+export function ListGroup({ children }: { children: ReactNode }) {
   const colors = useColors();
-  const b = BANNER_COLORS[kind];
+  const items = Array.isArray(children) ? children.filter(Boolean) : [children];
   return (
     <View
       style={{
-        padding: 12,
-        backgroundColor: b.bg ? colors[b.bg] : 'transparent',
-        borderRadius: 2,
+        backgroundColor: colors.surface,
+        borderWidth: border.hairline,
+        borderColor: colors.line,
+        borderRadius: radius,
+        overflow: 'hidden',
       }}
     >
-      <Text style={{ color: colors[b.fg], fontSize: 15 }}>{children}</Text>
+      {items.map((child, i) => (
+        <View key={i}>
+          {i === 0 ? null : <Divider />}
+          {child as ReactNode}
+        </View>
+      ))}
     </View>
   );
 }
 
-/** A filter chip (All / Needs you / Attention). */
-export function Chip({
-  label,
-  selected,
-  tone = 'neutral',
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  tone?: 'neutral' | 'attention';
-  onPress: () => void;
-}) {
-  const colors = useColors();
-  const fg = tone === 'attention' ? 'amber' : 'text';
-  const bg = tone === 'attention' ? 'amberDeep' : 'surfaceRaised';
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={{
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 2,
-        backgroundColor: selected ? colors[bg] : colors.surface,
-        borderWidth: 1,
-        borderColor: selected ? colors[fg === 'amber' ? 'amber' : 'lineStrong'] : colors.line,
-      }}
-    >
-      <Text
-        style={{ color: selected ? colors[fg] : colors.textDim, fontSize: 13, fontWeight: '600' }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-/** A settings list row: label, optional value, optional control. */
+/**
+ * One settings row: icon, label, a second line of detail, and a trailing
+ * value or control. The whole row is the target when it acts as a button
+ * (Fitts's Law — a 44px full-width target beats a chevron).
+ */
 export function ListRow({
+  icon,
   label,
+  detail,
   value,
-  note,
+  valueTone = 'dim',
   trailing,
   onPress,
   disabled,
 }: {
+  icon?: IconName;
   label: string;
+  detail?: string;
   value?: string;
-  note?: string;
+  valueTone?: 'dim' | 'accent' | 'amber';
   trailing?: ReactNode;
   onPress?: () => void;
   disabled?: boolean;
 }) {
   const colors = useColors();
+  const valueColor =
+    valueTone === 'accent'
+      ? colors.accentInk
+      : valueTone === 'amber'
+        ? colors.amber
+        : colors.textDim;
+
+  const body = (
+    <>
+      {icon ? (
+        <PixelIcon
+          name={icon}
+          size={tokens.icon.md}
+          color={colors.textDim}
+          style={{ marginTop: 2 }}
+        />
+      ) : null}
+      <View style={{ flex: 1, gap: space[1] }}>
+        <T step="body">{label}</T>
+        {detail ? (
+          <T step="small" color={colors.textDim}>
+            {detail}
+          </T>
+        ) : null}
+      </View>
+      {value ? (
+        <T step="body" color={valueColor} weight="600">
+          {value}
+        </T>
+      ) : null}
+      {trailing}
+      {onPress && !disabled ? (
+        <PixelIcon name="chevronRight" size={tokens.icon.sm} color={colors.textFaint} />
+      ) : null}
+    </>
+  );
+
   const style = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: colors.surface,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.line,
-    opacity: disabled ? 0.5 : 1,
+    gap: space[3],
+    minHeight: tokens.size.control,
+    paddingVertical: space[3],
+    paddingHorizontal: space[4],
+    opacity: disabled ? 0.6 : 1,
   };
-  const body = (
-    <>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={{ color: colors.text, fontSize: 15 }}>{label}</Text>
-        {note ? (
-          <Text style={{ color: colors.textDim, fontSize: 12 }}>
-            {value ? `${value} · ${note}` : note}
-          </Text>
-        ) : value ? (
-          <Text style={{ color: colors.textDim, fontSize: 13 }}>{value}</Text>
-        ) : null}
-      </View>
-      {trailing}
-    </>
-  );
-  // The whole row is the touch target when it acts as a button.
+
   if (onPress && !disabled) {
     return (
-      <Pressable style={style} onPress={onPress} accessibilityRole="button">
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        style={({ pressed }) => [style, pressed ? { backgroundColor: colors.surfaceRaised } : null]}
+      >
         {body}
       </Pressable>
     );
@@ -158,33 +147,80 @@ export function ListRow({
   return <View style={style}>{body}</View>;
 }
 
-export function SectionHead({ title }: { title: string }) {
+/** A settings row whose control is a switch. */
+export function SwitchRow({
+  icon,
+  label,
+  detail,
+  value,
+  onChange,
+}: {
+  icon?: IconName;
+  label: string;
+  detail?: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
   const colors = useColors();
   return (
-    <Text
-      style={{
-        color: colors.textDim,
-        fontSize: 11,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        marginTop: 20,
-        marginBottom: 8,
-        paddingHorizontal: 4,
-      }}
-    >
-      {title}
-    </Text>
+    <ListRow
+      icon={icon}
+      label={label}
+      detail={detail}
+      trailing={
+        <Switch
+          value={value}
+          onValueChange={onChange}
+          accessibilityLabel={label}
+          trackColor={{ false: colors.line, true: colors.accent }}
+          thumbColor={value ? colors.onAccent : colors.surfaceRaised}
+          ios_backgroundColor={colors.line}
+        />
+      }
+    />
   );
 }
 
-/** The "ALL CLEAR" empty state with the pixel illustration copy. */
-export function EmptyState({ line }: { line?: string }) {
+/**
+ * The "ALL CLEAR" empty state: the two-ink illustration, the pixel heading,
+ * one line on what is waiting, and the way out. An empty state with a next
+ * step is not a dead end.
+ */
+export function EmptyState({
+  illo = 'empty',
+  heading,
+  line,
+  action,
+}: {
+  illo?: 'empty' | 'signin';
+  heading: string;
+  line?: string;
+  action?: { label: string; icon?: IconName; onPress: () => void };
+}) {
   const colors = useColors();
   return (
-    <View style={{ alignItems: 'center', gap: 12, marginTop: 64 }}>
-      <PixelText text="ALL CLEAR" cell={3} color={colors.accentInk} />
-      {line ? <Text style={{ color: colors.textDim, fontSize: 15 }}>{line}</Text> : null}
+    <View
+      style={{
+        alignItems: 'center',
+        gap: space[4],
+        paddingVertical: space[7],
+        paddingHorizontal: space[5],
+        borderWidth: border.hairline,
+        borderColor: colors.line,
+        borderStyle: 'dashed',
+        borderRadius: radius,
+      }}
+    >
+      <PixelIllustration name={illo} width={160} color={colors.textDim} accent={colors.accentInk} />
+      <PixelText text={heading} scale={tokens.pixel.scale.heading} color={colors.text} />
+      {line ? (
+        <T step="body" color={colors.textDim} style={{ textAlign: 'center' }}>
+          {line}
+        </T>
+      ) : null}
+      {action ? (
+        <Button label={action.label} icon={action.icon} onPress={action.onPress} compact />
+      ) : null}
     </View>
   );
 }

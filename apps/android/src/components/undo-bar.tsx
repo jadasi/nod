@@ -1,14 +1,22 @@
 /**
- * PROVISIONAL UI — functional placeholder, owned by Designer (BYT-753).
- * The docked undo bar: "Sending in m:ss", the Undo button and the draining
- * meter. Reads only server timestamps (answeredAt / deliverAfter) and a
- * ticking `now`, so it can be driven by the live decision or by a record
- * restored from encrypted storage.
+ * The docked undo bar.
+ *
+ * The most forgiving surface in the app, so it gets the full emphasis set:
+ * the accent tint, corner brackets, scanlines and the draining segmented
+ * meter. Undo is never more than one tap away while the bar is visible.
+ *
+ * It reads only server timestamps (answeredAt / deliverAfter) and a ticking
+ * `now`, so the same bar renders from the live decision or from a record
+ * restored from encrypted storage after process death.
  */
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import { tokens } from '@nod/design-tokens';
 import { formatCountdown } from '@/lib/format.js';
 import { meterFraction, remainingMs } from '@/lib/undo.js';
-import { useColors } from '@/theme.js';
-import { Pressable, Text, View } from 'react-native';
+import { border, space, useColors } from '@/theme.js';
+import { Brackets, Button, Meter, Scanlines, T } from './ui';
+import { PixelIcon } from './pixel';
 
 export interface UndoSpec {
   decisionId: string;
@@ -17,56 +25,66 @@ export interface UndoSpec {
   deliverAfter: string;
 }
 
+const BAR_HEIGHT = 96;
+
 export function UndoBar({
   spec,
   now,
   onUndo,
-  onOpen,
+  busy,
 }: {
   spec: UndoSpec;
   now: number;
   onUndo: () => void;
-  onOpen?: () => void;
+  busy?: boolean;
 }) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const left = remainingMs(spec.deliverAfter, now);
   const fraction = meterFraction(spec.answeredAt, spec.deliverAfter, now);
+  const expired = left <= 0;
 
   return (
     <View
+      accessibilityLiveRegion="polite"
       style={{
         backgroundColor: colors.accentDeep,
-        borderTopWidth: 1,
-        borderTopColor: colors.accent,
-        padding: 14,
-        gap: 10,
+        borderTopWidth: border.hairline,
+        borderTopColor: colors.accentInk,
+        paddingBottom: insets.bottom,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Pressable
-          onPress={onOpen}
-          accessibilityRole={onOpen ? 'button' : undefined}
-          style={{ flex: 1 }}
-        >
-          <Text style={{ color: colors.accentInk, fontSize: 15, fontWeight: '700' }}>
-            {`Sending “${spec.label}” in ${formatCountdown(left)}`}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={onUndo}
-          accessibilityRole="button"
-          style={{
-            backgroundColor: colors.accent,
-            paddingHorizontal: 16,
-            paddingVertical: 10,
-            borderRadius: 2,
-          }}
-        >
-          <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '700' }}>Undo</Text>
-        </Pressable>
-      </View>
-      <View style={{ height: 3, backgroundColor: colors.surfaceRaised }}>
-        <View style={{ height: 3, width: `${fraction * 100}%`, backgroundColor: colors.accent }} />
+      <View style={{ padding: space[4], gap: space[3] }}>
+        <Scanlines height={BAR_HEIGHT} />
+        <Brackets color={colors.accentInk} inset={space[1]} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+          <PixelIcon
+            name={expired ? 'send' : 'clock'}
+            size={tokens.icon.md}
+            color={colors.accentInk}
+          />
+          <View style={{ flex: 1 }}>
+            <T step="title" color={colors.accentInk}>
+              {expired ? 'Sending…' : `Sending in ${formatCountdown(left)}`}
+            </T>
+            <T step="small" color={colors.accentInk} numberOfLines={1}>
+              {spec.label}
+            </T>
+          </View>
+          {expired ? null : (
+            <Button
+              label="Undo"
+              icon="undo"
+              tone="accentOutline"
+              onPress={onUndo}
+              disabled={busy}
+              accessibilityHint="Take the answer back before Nod sends it"
+            />
+          )}
+        </View>
+
+        <Meter fraction={expired ? 0 : fraction} />
       </View>
     </View>
   );

@@ -1,64 +1,124 @@
 /**
- * PROVISIONAL UI (BYT-753). Three tabs — Inbox · Updates · Settings — with
- * pixel icons; the Inbox tab carries the "needs you" badge (the amber
- * attention count shows in the Inbox's attention row until the design pass).
+ * Three tabs — Inbox · Updates · Settings — with a custom bar, because the
+ * Inbox tab carries two badges: a green count of decisions that need David
+ * and, next to it, an amber count of items that need repair. The amber
+ * count stays visible from every tab, so a failed delivery is never hidden
+ * behind a filter.
  */
 import { Tabs } from 'expo-router';
-import { useDecisions } from '@/state.js';
+import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tokens } from '@nod/design-tokens';
 import { needsYou } from '@/lib/sort.js';
-import { useColors } from '@/theme.js';
-import { PixelIcon } from '@/components/pixel';
-import type { IconName } from '@nod/design-tokens';
+import { border, space, useColors } from '@/theme.js';
+import { useDecisions, useRepair } from '@/state.js';
+import { PixelIcon, type IconName } from '@/components/pixel';
+import { T } from '@/components/ui';
 
-function TabIcon({ name, color }: { name: IconName; color: string }) {
-  return <PixelIcon name={name} cell={2} color={color} />;
+const TABS: { name: string; label: string; icon: IconName }[] = [
+  { name: 'inbox', label: 'Inbox', icon: 'inbox' },
+  { name: 'updates', label: 'Updates', icon: 'updates' },
+  { name: 'settings', label: 'Settings', icon: 'gear' },
+];
+
+function Badge({ count, tone }: { count: number; tone: 'accent' | 'amber' }) {
+  const colors = useColors();
+  if (count <= 0) return null;
+  return (
+    <View
+      style={{
+        minWidth: space[4],
+        paddingHorizontal: space[1],
+        backgroundColor: tone === 'accent' ? colors.accent : colors.amber,
+        alignItems: 'center',
+      }}
+    >
+      <T step="label" color={tone === 'accent' ? colors.onAccent : colors.bg} weight="700">
+        {count}
+      </T>
+    </View>
+  );
+}
+
+/** Only the slice of the navigator's tab-bar props this bar actually uses. */
+interface TabBarProps {
+  state: { index: number };
+  navigation: { navigate: (name: string) => void };
+}
+
+export function TabBar({ state, navigation }: TabBarProps) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { data: decisions } = useDecisions();
+  const { data: repair } = useRepair();
+  const waiting = (decisions ?? []).filter(needsYou).length;
+  const attention = (repair ?? []).length;
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        backgroundColor: colors.bg,
+        borderTopWidth: border.hairline,
+        borderTopColor: colors.line,
+        paddingBottom: insets.bottom,
+      }}
+    >
+      {TABS.map((tab, i) => {
+        const focused = state.index === i;
+        const tint = focused ? colors.text : colors.textDim;
+        const badges = tab.name === 'inbox';
+        return (
+          <Pressable
+            key={tab.name}
+            onPress={() => navigation.navigate(tab.name)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: focused }}
+            accessibilityLabel={
+              badges && (waiting > 0 || attention > 0)
+                ? `${tab.label}, ${waiting} need you, ${attention} need attention`
+                : tab.label
+            }
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              gap: space[2],
+              paddingTop: space[3],
+              paddingBottom: space[3],
+              borderTopWidth: 2,
+              borderTopColor: focused ? colors.text : 'transparent',
+              marginTop: -border.hairline,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+              <PixelIcon name={tab.icon} size={tokens.icon.md} color={tint} />
+              {badges ? (
+                <>
+                  <Badge count={waiting} tone="accent" />
+                  <Badge count={attention} tone="amber" />
+                </>
+              ) : null}
+            </View>
+            <T step="label" color={tint} weight={focused ? '700' : '600'}>
+              {tab.label}
+            </T>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
 }
 
 export default function TabsLayout() {
   const colors = useColors();
-  const decisions = useDecisions();
-  const count = decisions.data?.filter(needsYou).length ?? 0;
-  // The router hands back its internal color type (string | object | null);
-  // the pixel icons only take a string.
-  const iconColor = (color: unknown): string =>
-    typeof color === 'string' ? color : colors.textDim;
-
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.accentInk,
-        tabBarInactiveTintColor: colors.textDim,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.line,
-        },
-        sceneStyle: { backgroundColor: colors.bg },
-      }}
+      tabBar={(props) => <TabBar {...(props as unknown as TabBarProps)} />}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}
     >
-      <Tabs.Screen
-        name="inbox"
-        options={{
-          title: 'Inbox',
-          tabBarIcon: ({ color }) => <TabIcon name="inbox" color={iconColor(color)} />,
-          tabBarBadge: count > 0 ? count : undefined,
-          tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.onAccent },
-        }}
-      />
-      <Tabs.Screen
-        name="updates"
-        options={{
-          title: 'Updates',
-          tabBarIcon: ({ color }) => <TabIcon name="updates" color={iconColor(color)} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: 'Settings',
-          tabBarIcon: ({ color }) => <TabIcon name="gear" color={iconColor(color)} />,
-        }}
-      />
+      {TABS.map((t) => (
+        <Tabs.Screen key={t.name} name={t.name} options={{ title: t.label }} />
+      ))}
     </Tabs>
   );
 }

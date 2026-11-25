@@ -1,31 +1,40 @@
 /**
- * PROVISIONAL UI (BYT-753). The decision detail, following the web detail
- * top to bottom: tags, title, impact, options (the recommended one green,
- * none green for external provenance), the default line, freshness with
- * Refresh, the collapsed evidence, and the dock with Other / Talk it
- * through. Answering starts the undo window; the docked bar (or a record
- * restored from encrypted storage) carries it until core delivers.
+ * The decision detail.
+ *
+ * Reading order is the whole design: what it changes, then what you can
+ * do, then what happens if you say nothing, then how fresh it is, and the
+ * technical evidence last and collapsed. Impact over implementation.
+ *
+ * The dock keeps "Other answer" and "Talk it through" in thumb reach
+ * without crowding the options. When an answer is in its undo window the
+ * dock gives way to the undo bar — one bottom surface at a time.
  */
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking as RnLinking,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Linking as RnLinking, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { tokens } from '@nod/design-tokens';
+import type { DecisionView } from '@/api/types.js';
 import { answerLabel, pendingRecordFromDecision, type PendingAnswerRecord } from '@/lib/undo.js';
 import { answerBanner, cardBanner, defaultLine, formatAge, safeUrl } from '@/lib/format.js';
 import { callAvailability, isOpenNow } from '@/lib/hours.js';
-import { useAppStore, useDecision, useNow, useStatus, client } from '@/state.js';
-import { useColors } from '@/theme.js';
-import { StatusBanner, Tag } from '@/components/bits';
-import { UndoBar, type UndoSpec } from '@/components/undo-bar';
+import { client, useAppStore, useDecision, useNow, useStatus } from '@/state.js';
+import { border, radius, space, useColors } from '@/theme.js';
+import { AppHeader } from '@/components/appbar';
 import { PixelIcon } from '@/components/pixel';
-import type { DecisionView } from '@/api/types.js';
+import { YourAnswer, YourCall } from '@/components/options';
+import { UndoBar, type UndoSpec } from '@/components/undo-bar';
+import {
+  Banner,
+  Button,
+  Callout,
+  Label,
+  NoticeStrip,
+  Panel,
+  Skeleton,
+  T,
+  Tag,
+} from '@/components/ui';
 
 function undoSpecFrom(d: DecisionView, pending: PendingAnswerRecord[]): UndoSpec | null {
   if (d.answer?.can_undo) {
@@ -46,137 +55,135 @@ function undoSpecFrom(d: DecisionView, pending: PendingAnswerRecord[]): UndoSpec
   };
 }
 
-function Options({ d, onAnswer }: { d: DecisionView; onAnswer: (optId: string) => void }) {
+/** The collapsed technical evidence. Closed by default: it is not the brief. */
+function Evidence({ decision }: { decision: DecisionView }) {
   const colors = useColors();
-  const external = d.provenance.kind === 'external';
-  const [confirming, setConfirming] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const pick = (optId: string): void => {
-    // Internal decisions answer in one tap; external writes need the confirm step.
-    if (!external) {
-      onAnswer(optId);
-    } else {
-      setConfirming(optId);
-    }
-  };
-
-  const confirm = async (): Promise<void> => {
-    if (!confirming) return;
-    setBusy(true);
-    try {
-      onAnswer(confirming);
-      setConfirming(null);
-    } finally {
-      setBusy(false);
-    }
-  };
-
+  const [open, setOpen] = useState(false);
+  if (decision.evidence.length === 0) return null;
   return (
-    <View style={{ gap: 8 }}>
-      <Text
+    <Panel>
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
         style={{
-          color: colors.textDim,
-          fontSize: 11,
-          fontWeight: '700',
-          textTransform: 'uppercase',
-          letterSpacing: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: space[3],
+          minHeight: tokens.size.control,
+          paddingHorizontal: space[4],
         }}
       >
-        Your call
-      </Text>
-      {d.options.map((o) => {
-        const recommended = o.id === d.recommended;
-        const primary = recommended && !external;
-        return (
-          <Pressable
-            key={o.id}
-            onPress={() => pick(o.id)}
-            accessibilityRole="button"
-            style={{
-              backgroundColor: primary ? colors.accent : colors.surface,
-              borderColor: primary ? colors.accent : colors.lineStrong,
-              borderWidth: 1,
-              borderRadius: 2,
-              padding: 14,
-              gap: 4,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {recommended ? (
-                <PixelIcon
-                  name="star"
-                  cell={2}
-                  color={primary ? colors.onAccent : colors.accentInk}
-                />
-              ) : null}
-              <Text
-                style={{
-                  color: primary ? colors.onAccent : colors.text,
-                  fontSize: 15,
-                  fontWeight: '700',
-                  flex: 1,
-                }}
-              >
-                {o.label}
-                {o.writes ? '  (changes something)' : ''}
-              </Text>
-            </View>
-            <Text style={{ color: primary ? colors.onAccent : colors.textDim, fontSize: 13 }}>
-              {o.outcome}
-            </Text>
-            {!o.reversible ? (
-              <Text style={{ color: primary ? colors.onAccent : colors.amber, fontSize: 11 }}>
-                Not reversible
-              </Text>
-            ) : null}
-          </Pressable>
-        );
-      })}
-      {confirming ? (
+        <PixelIcon name="evidence" size={tokens.icon.md} color={colors.textDim} />
+        <T step="small" color={colors.textDim} weight="600" style={{ flex: 1 }}>
+          {`Technical evidence (${decision.evidence.length})`}
+        </T>
+        <PixelIcon
+          name={open ? 'chevronDown' : 'chevronRight'}
+          size={tokens.icon.sm}
+          color={colors.textDim}
+        />
+      </Pressable>
+      {open ? (
         <View
           style={{
-            backgroundColor: colors.amberDeep,
-            borderRadius: 2,
-            padding: 14,
-            gap: 10,
-            borderLeftWidth: 3,
-            borderLeftColor: colors.amber,
+            gap: space[3],
+            paddingHorizontal: space[4],
+            paddingBottom: space[4],
+            borderTopWidth: border.hairline,
+            borderTopColor: colors.line,
+            paddingTop: space[3],
           }}
         >
-          <Text style={{ color: colors.amber, fontSize: 14, fontWeight: '600' }}>
-            Send this reply?
-          </Text>
-          <Text style={{ color: colors.text, fontSize: 13 }}>
-            {d.options.find((o) => o.id === confirming)?.label} — this writes to the source, and Nod
-            never answers outside input for you.
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
-            <Pressable onPress={() => setConfirming(null)} accessibilityRole="button">
-              <Text style={{ color: colors.textDim, fontSize: 14 }}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => void confirm()}
-              disabled={busy}
-              accessibilityRole="button"
-              style={{
-                backgroundColor: colors.accent,
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                borderRadius: 2,
-              }}
-            >
-              {busy ? (
-                <ActivityIndicator color={colors.onAccent} />
-              ) : (
-                <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '700' }}>
-                  Send reply
-                </Text>
-              )}
-            </Pressable>
-          </View>
+          {decision.evidence.map((e, i) => (
+            <View key={i} style={{ gap: space[1] }}>
+              <T step="label" color={colors.textDim}>
+                {e.label}
+              </T>
+              {e.text ? <T step="small">{e.text}</T> : null}
+              {e.url ? (
+                <T
+                  step="small"
+                  color={colors.accentInk}
+                  onPress={() => {
+                    const u = safeUrl(e.url!);
+                    if (u) void RnLinking.openURL(u);
+                  }}
+                >
+                  {e.url}
+                </T>
+              ) : null}
+            </View>
+          ))}
         </View>
       ) : null}
+    </Panel>
+  );
+}
+
+/** The free-text answer. One field, one send, cancel always available. */
+function OtherAnswer({
+  busy,
+  onSend,
+  onCancel,
+}: {
+  busy?: boolean;
+  onSend: (text: string) => void;
+  onCancel: () => void;
+}) {
+  const colors = useColors();
+  const [text, setText] = useState('');
+  const ready = text.trim().length > 0;
+  return (
+    <View style={{ gap: space[3] }}>
+      <Label>Your own answer</Label>
+      <TextInput
+        value={text}
+        onChangeText={setText}
+        multiline
+        autoFocus
+        accessibilityLabel="Your own answer"
+        placeholder="What should happen instead?"
+        placeholderTextColor={colors.textFaint}
+        style={{
+          ...tokens.type.body,
+          fontWeight: '400',
+          backgroundColor: colors.surface,
+          borderWidth: border.hairline,
+          borderColor: colors.lineStrong,
+          borderRadius: radius,
+          color: colors.text,
+          minHeight: space[8] + space[4],
+          padding: space[3],
+          textAlignVertical: 'top',
+        }}
+      />
+      <View style={{ flexDirection: 'row', gap: space[3] }}>
+        <Button label="Cancel" tone="outline" grow onPress={onCancel} disabled={busy} />
+        <Button
+          label="Send"
+          icon="send"
+          tone="primary"
+          grow
+          disabled={busy || !ready}
+          onPress={() => onSend(text.trim())}
+        />
+      </View>
+    </View>
+  );
+}
+
+/** The loading detail: the same shape as the real one, so nothing jumps. */
+function LoadingDetail() {
+  return (
+    <View style={{ padding: space[4], gap: space[4] }}>
+      <Skeleton height={20} width="50%" />
+      <Skeleton height={28} width="85%" />
+      <Skeleton height={16} />
+      <Skeleton height={16} />
+      <Skeleton height={16} width="70%" />
+      <Skeleton height={tokens.size.control + space[5]} />
+      <Skeleton height={tokens.size.control + space[5]} />
     </View>
   );
 }
@@ -185,14 +192,13 @@ export default function DecisionDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const decisionId = id ?? '';
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const now = useNow();
   const { data: d, refetch } = useDecision(decisionId);
   const { data: status } = useStatus();
   const live = useAppStore((s) => s.live);
   const pending = useAppStore((s) => s.pending);
-  const [otherText, setOtherText] = useState('');
   const [showOther, setShowOther] = useState(false);
-  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const act = async (fn: () => Promise<unknown>): Promise<void> => {
@@ -215,356 +221,254 @@ export default function DecisionDetail() {
     }
   };
 
-  const answerOption = (optId: string): void => {
-    void act(() => client()!.answer(decisionId, { optionId: optId }));
-  };
-
   if (!d) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.bg,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <ActivityIndicator color={colors.accentInk} />
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <AppHeader title="Decision" onBack={() => router.back()} />
+        <LoadingDetail />
       </View>
     );
   }
 
-  const banner = answerBanner(d.answer, now);
+  const answerState = answerBanner(d.answer, now);
   const stateLine = cardBanner(d, now);
   const external = d.provenance.kind === 'external';
-  const freshMs = now - new Date(d.freshness.last_checked_at).getTime();
-  const staleFresh = status !== undefined && freshMs > status.reconciler_interval_seconds * 1000;
+  const urgent = d.urgency === 'urgent';
+  const open = d.status === 'open' && !d.answer;
+  const freshSeconds = Math.max(0, (now - new Date(d.freshness.last_checked_at).getTime()) / 1000);
+  const staleFresh = status !== undefined && freshSeconds > status.reconciler_interval_seconds;
   const undoSpec = undoSpecFrom(d, pending);
-  const callNote = callAvailability(now);
-  const callOpen = isOpenNow(now);
   const source = [d.source.system, d.source.agent].filter(Boolean).join(' · ');
+  const defaults = defaultLine(d, now);
+  const callOpen = isOpenNow(now);
+  const callNote = callAvailability(now);
+
+  /** Repair actions, mirroring the Attention filter so both places agree. */
+  const repair: {
+    label: string;
+    icon: 'refresh' | 'send' | 'close';
+    danger?: boolean;
+    run: () => void;
+  }[] = [];
+  if (d.status === 'stale' || d.status === 'expired')
+    repair.push({
+      label: 'Re-ask',
+      icon: 'refresh',
+      run: () => void act(() => client()!.reask(decisionId)),
+    });
+  if (d.status === 'failed') {
+    repair.push({
+      label: 'Retry',
+      icon: 'send',
+      run: () => void act(() => client()!.reask(decisionId)),
+    });
+    repair.push({
+      label: 'Force refresh',
+      icon: 'refresh',
+      run: () => void act(() => client()!.refresh(decisionId)),
+    });
+  }
+  if (d.status === 'stale' || d.status === 'failed' || d.status === 'expired')
+    repair.push({
+      label: 'Withdraw',
+      icon: 'close',
+      danger: true,
+      run: () => void act(() => client()!.withdraw(decisionId)),
+    });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <AppHeader title="Decision" onBack={() => router.back()} />
+
+      {!live ? (
+        <NoticeStrip
+          tone="offline"
+          title="Offline. Showing what you had."
+          detail="Answering needs a connection."
+        />
+      ) : null}
+
       <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 16 }}
+        contentContainerStyle={{
+          padding: space[4],
+          paddingBottom: space[6],
+          gap: space[4],
+        }}
         keyboardShouldPersistTaps="handled"
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            style={{ padding: 8 }}
-          >
-            <PixelIcon name="back" cell={3} color={colors.textDim} />
-          </Pressable>
-          <Text style={{ color: colors.textDim, fontSize: 12, flex: 1 }}>{source}</Text>
-        </View>
-
-        <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-          {d.urgency === 'urgent' ? <Tag tone="urgent">Urgent</Tag> : null}
-          {external ? <Tag tone="external">From external</Tag> : null}
-          {d.options.some((o) => o.writes) ? <Tag tone="write">Writes</Tag> : null}
-        </View>
-
-        <View style={{ gap: 6 }}>
-          <Text style={{ color: colors.text, fontSize: 19, fontWeight: '700' }}>
-            {d.glance.title}
-          </Text>
-          <Text style={{ color: colors.textDim, fontSize: 15 }}>{d.glance.question}</Text>
-        </View>
-
-        <Text style={{ color: colors.text, fontSize: 17, lineHeight: 26 }}>{d.impact}</Text>
-
-        {external ? (
-          <View
-            style={{
-              backgroundColor: colors.amberDeep,
-              borderLeftWidth: 3,
-              borderLeftColor: colors.amber,
-              borderRadius: 2,
-              padding: 12,
-            }}
-          >
-            <Text style={{ color: colors.amber, fontSize: 13 }}>
-              From outside
-              {d.provenance.origin ? `: ${d.provenance.origin}` : ''}. Nod never answers this for
-              you: no default, no rules, no one-tap answer from a notification.
-            </Text>
-          </View>
-        ) : null}
-
-        {d.answer ? (
-          banner ? (
-            <StatusBanner kind={banner.kind}>{banner.text}</StatusBanner>
-          ) : stateLine ? (
-            <StatusBanner kind={stateLine.kind}>{stateLine.text}</StatusBanner>
-          ) : null
-        ) : d.status === 'open' ? (
-          <Options d={d} onAnswer={answerOption} />
-        ) : stateLine ? (
-          <View style={{ gap: 10 }}>
-            <StatusBanner kind={stateLine.kind}>{stateLine.text}</StatusBanner>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {(d.status === 'stale' || d.status === 'failed') && !busy ? (
-                <Pressable
-                  onPress={() => void act(() => client()!.reask(decisionId))}
-                  accessibilityRole="button"
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderColor: colors.lineStrong,
-                    borderWidth: 1,
-                    borderRadius: 2,
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-                    Re-ask
-                  </Text>
-                </Pressable>
+        {/* The decision itself is one bracketed panel: tags, title and impact
+            read as a single object, and the brackets say it needs David. */}
+        <Panel tone={open ? (urgent ? 'urgent' : 'needsYou') : 'plain'}>
+          <View style={{ gap: space[4], padding: space[4] }}>
+            <View style={{ flexDirection: 'row', gap: space[2], flexWrap: 'wrap' }}>
+              {urgent ? (
+                <Tag tone="urgent" icon="alert">
+                  Urgent
+                </Tag>
               ) : null}
-              {d.status === 'failed' && !busy ? (
-                <Pressable
-                  onPress={() => void act(() => client()!.refresh(decisionId))}
-                  accessibilityRole="button"
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderColor: colors.lineStrong,
-                    borderWidth: 1,
-                    borderRadius: 2,
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>Retry</Text>
-                </Pressable>
+              {answerState ? (
+                <Tag tone="answered" icon="check">
+                  Answered
+                </Tag>
               ) : null}
-              {(d.status === 'stale' || d.status === 'failed' || d.status === 'expired') &&
-              !busy ? (
-                <Pressable
-                  onPress={() => void act(() => client()!.withdraw(decisionId))}
-                  accessibilityRole="button"
-                  style={{
-                    backgroundColor: colors.surface,
-                    borderColor: colors.lineStrong,
-                    borderWidth: 1,
-                    borderRadius: 2,
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                  }}
-                >
-                  <Text style={{ color: colors.red, fontSize: 14, fontWeight: '600' }}>
-                    Withdraw
-                  </Text>
-                </Pressable>
+              {external ? (
+                <Tag tone="external" icon="mail">
+                  {d.provenance.origin ? `From ${d.provenance.origin}` : 'From outside'}
+                </Tag>
+              ) : null}
+              {source ? (
+                <Tag tone="source" icon="agent">
+                  {source}
+                </Tag>
               ) : null}
             </View>
+
+            {/* The title and the impact share the `lead` step; weight carries
+                the hierarchy. The mockups draw the title larger than any step
+                in the scale — reported as a token proposal rather than
+                inlined here. */}
+            <T step="lead" weight="700">
+              {d.glance.title}
+            </T>
+
+            <View style={{ gap: space[2] }}>
+              <Label>Impact</Label>
+              <T step="lead">{d.impact}</T>
+            </View>
           </View>
+        </Panel>
+
+        {external ? (
+          <Callout title={`From outside${d.provenance.origin ? `: ${d.provenance.origin}` : ''}`}>
+            Every option writes back to the sender. Nod never answers this for you: no default, no
+            rules, no one-tap answer from a notification.
+          </Callout>
         ) : null}
 
-        {!d.answer &&
-        !defaultLine(d, now) &&
-        d.status === 'open' &&
-        d.urgency !== 'urgent' &&
-        !isOpenNow(now) ? (
-          <Text style={{ color: colors.textDim, fontSize: 13 }}>
-            The default is paused until 8:00 am Phoenix.
-          </Text>
-        ) : null}
-        {defaultLine(d, now) ? (
-          <Text style={{ color: colors.textDim, fontSize: 14 }}>{defaultLine(d, now)}</Text>
-        ) : null}
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text
-            style={{ color: staleFresh ? colors.amber : colors.textDim, fontSize: 13, flex: 1 }}
-          >
-            {`Checked ${formatAge(Math.max(0, (now - new Date(d.freshness.last_checked_at).getTime()) / 1000))} ago`}
-            {staleFresh ? ' · a while now' : ''}
-          </Text>
-          <Pressable
-            onPress={() => void act(() => client()!.refresh(decisionId))}
-            disabled={busy}
-            accessibilityRole="button"
-            style={{
-              backgroundColor: colors.surface,
-              borderColor: colors.lineStrong,
-              borderWidth: 1,
-              borderRadius: 2,
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-            }}
-          >
-            <Text style={{ color: colors.text, fontSize: 13, fontWeight: '600' }}>Refresh</Text>
-          </Pressable>
-        </View>
-
-        {d.evidence.length > 0 ? (
-          <View
-            style={{
-              backgroundColor: colors.surface,
-              borderColor: colors.line,
-              borderWidth: 1,
-              borderRadius: 2,
-              padding: 14,
-              gap: 8,
-            }}
-          >
-            <Pressable
-              onPress={() => setEvidenceOpen((v) => !v)}
-              accessibilityRole="button"
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-            >
-              <Text style={{ color: colors.textDim, fontSize: 13, flex: 1 }}>
-                {`Technical evidence (${d.evidence.length})`}
-              </Text>
-              <PixelIcon
-                name={evidenceOpen ? 'chevronDown' : 'chevronRight'}
-                cell={2}
-                color={colors.textDim}
-              />
-            </Pressable>
-            {evidenceOpen
-              ? d.evidence.map((e, i) => (
-                  <View key={i} style={{ gap: 2 }}>
-                    <Text style={{ color: colors.text, fontSize: 13 }}>
-                      {e.label}
-                      {e.kind === 'diff_summary'
-                        ? ` — ${e.text ?? ''}`
-                        : e.text
-                          ? ` — ${e.text}`
-                          : ''}
-                    </Text>
-                    {e.url ? (
-                      <Text
-                        onPress={() => {
-                          const u = safeUrl(e.url!);
-                          if (u) void RnLinking.openURL(u);
-                        }}
-                        style={{ color: colors.accentInk, fontSize: 13 }}
-                      >
-                        {e.url}
-                      </Text>
-                    ) : null}
-                  </View>
-                ))
-              : null}
-          </View>
-        ) : null}
-      </ScrollView>
-
-      <View style={{ borderTopWidth: 1, borderTopColor: colors.line }}>
-        {undoSpec ? (
-          <UndoBar
-            spec={undoSpec}
-            now={now}
-            onUndo={() => {
-              void act(() => client()!.undo(decisionId));
-            }}
-            onOpen={() => router.push(`/decision/${decisionId}`)}
-          />
-        ) : d.status === 'open' && !d.answer && live ? (
-          <View style={{ padding: 14, gap: 10, backgroundColor: colors.bg }}>
-            {d.allow_other ? (
-              showOther ? (
-                <View style={{ gap: 8 }}>
-                  <TextInput
-                    value={otherText}
-                    onChangeText={setOtherText}
-                    multiline
-                    placeholder="What's your answer?"
-                    placeholderTextColor={colors.textFaint}
-                    style={{
-                      backgroundColor: colors.surface,
-                      borderColor: colors.lineStrong,
-                      borderWidth: 1,
-                      borderRadius: 2,
-                      color: colors.text,
-                      minHeight: 64,
-                      padding: 10,
-                    }}
-                  />
-                  <View style={{ flexDirection: 'row', gap: 8, justifyContent: 'flex-end' }}>
-                    <Pressable onPress={() => setShowOther(false)} accessibilityRole="button">
-                      <Text style={{ color: colors.textDim, fontSize: 14 }}>Cancel</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => {
-                        const t = otherText.trim();
-                        if (!t) return;
-                        void act(() => client()!.answer(decisionId, { otherText: t }));
-                        setOtherText('');
-                        setShowOther(false);
-                      }}
-                      disabled={busy || otherText.trim().length === 0}
-                      accessibilityRole="button"
-                      style={{
-                        backgroundColor: colors.accent,
-                        paddingHorizontal: 14,
-                        paddingVertical: 8,
-                        borderRadius: 2,
-                        opacity: busy || otherText.trim().length === 0 ? 0.6 : 1,
-                      }}
-                    >
-                      <Text style={{ color: colors.onAccent, fontSize: 14, fontWeight: '700' }}>
-                        Send
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={() => setShowOther(true)}
-                  accessibilityRole="button"
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
-                >
-                  <PixelIcon name="other" cell={3} color={colors.textDim} />
-                  <Text style={{ color: colors.textDim, fontSize: 14, fontWeight: '600' }}>
-                    Other answer
-                  </Text>
-                </Pressable>
-              )
+        {answerState ? (
+          <>
+            <YourAnswer decision={d} label={answerLabel(d, d.answer!)} />
+            {answerState.kind !== 'undo' ? (
+              <Banner kind={answerState.kind}>{answerState.text}</Banner>
             ) : null}
-            {d.allow_call ? (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  opacity: callOpen ? 1 : 0.5,
-                }}
-              >
-                <PixelIcon
-                  name="call"
-                  cell={3}
-                  color={callOpen ? colors.accentInk : colors.textDim}
-                />
-                <Text
-                  style={{
-                    color: callOpen ? colors.text : colors.textDim,
-                    fontSize: 14,
-                    fontWeight: '600',
-                  }}
-                >
-                  Talk it through
-                </Text>
-                <Text
-                  style={{ color: colors.textFaint, fontSize: 12, flex: 1, textAlign: 'right' }}
-                >
-                  {callOpen ? 'Call Me arrives in a later update' : (callNote ?? '')}
-                </Text>
+          </>
+        ) : open ? (
+          showOther ? (
+            <OtherAnswer
+              busy={busy}
+              onCancel={() => setShowOther(false)}
+              onSend={(text) => {
+                setShowOther(false);
+                void act(() => client()!.answer(decisionId, { otherText: text }));
+              }}
+            />
+          ) : (
+            <YourCall
+              decision={d}
+              busy={busy}
+              disabled={busy || !live}
+              onAnswer={(optionId) => void act(() => client()!.answer(decisionId, { optionId }))}
+            />
+          )
+        ) : stateLine ? (
+          <View style={{ gap: space[3] }}>
+            <Banner kind={stateLine.kind}>{stateLine.text}</Banner>
+            {repair.length > 0 ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+                {repair.map((r) => (
+                  <Button
+                    key={r.label}
+                    label={r.label}
+                    icon={r.icon}
+                    tone={r.danger ? 'danger' : 'outline'}
+                    compact
+                    disabled={busy}
+                    onPress={r.run}
+                  />
+                ))}
               </View>
             ) : null}
           </View>
         ) : null}
-      </View>
+
+        {open && defaults ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+            <PixelIcon name="clock" size={tokens.icon.md} color={colors.textDim} />
+            <T step="body" color={colors.textDim} style={{ flex: 1 }}>
+              {defaults}
+            </T>
+          </View>
+        ) : open && !isOpenNow(now) && !urgent ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+            <PixelIcon name="moon" size={tokens.icon.md} color={colors.textDim} />
+            <T step="body" color={colors.textDim} style={{ flex: 1 }}>
+              If you say nothing: paused until 8:00 am.
+            </T>
+          </View>
+        ) : null}
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+          <PixelIcon
+            name="refresh"
+            size={tokens.icon.md}
+            color={staleFresh ? colors.amber : colors.textDim}
+          />
+          <T step="small" color={staleFresh ? colors.amber : colors.textDim} style={{ flex: 1 }}>
+            {`Checked ${formatAge(freshSeconds)} ago`}
+            {staleFresh ? ' · worth a refresh' : ''}
+          </T>
+          <Button
+            label="Refresh"
+            compact
+            disabled={busy || !live}
+            onPress={() => void act(() => client()!.refresh(decisionId))}
+          />
+        </View>
+
+        <Evidence decision={d} />
+      </ScrollView>
+
+      {undoSpec ? (
+        <UndoBar
+          spec={undoSpec}
+          now={now}
+          busy={busy}
+          onUndo={() => void act(() => client()!.undo(decisionId))}
+        />
+      ) : open && !showOther && (d.allow_other || d.allow_call) ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: space[3],
+            padding: space[4],
+            paddingBottom: insets.bottom + space[4],
+            borderTopWidth: border.hairline,
+            borderTopColor: colors.line,
+            backgroundColor: colors.bg,
+          }}
+        >
+          {d.allow_other ? (
+            <Button
+              label="Other answer"
+              icon="other"
+              grow
+              disabled={!live}
+              onPress={() => setShowOther(true)}
+            />
+          ) : null}
+          {d.allow_call ? (
+            <Button
+              label="Talk it through"
+              icon="call"
+              grow
+              disabled
+              accessibilityHint={
+                callOpen ? 'Call Me arrives in a later update' : (callNote ?? undefined)
+              }
+            />
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }

@@ -4,6 +4,7 @@
  * PROVISIONAL (functional placeholder, owned by Designer — BYT-753).
  */
 import { QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -47,15 +48,17 @@ export default function RootLayout() {
   if (!booted) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {session ? <SessionHooks /> : null}
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.bg },
-        }}
-      />
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        {session ? <SessionHooks /> : null}
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.bg },
+          }}
+        />
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
