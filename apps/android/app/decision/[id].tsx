@@ -210,8 +210,15 @@ export default function DecisionDetail() {
       if (out) {
         const rec = pendingRecordFromDecision(out);
         const store = useAppStore.getState();
-        if (rec) await store.rememberAnswer(rec);
-        else await store.forgetAnswer(decisionId);
+        try {
+          // A local persistence failure must not skip the refetch: the
+          // answer is already safe on core, and reconcilePending re-derives
+          // the record from the live decision on the next foreground.
+          if (rec) await store.rememberAnswer(rec);
+          else await store.forgetAnswer(decisionId);
+        } catch {
+          // Swallowed on purpose — the refetch below still runs.
+        }
       }
       await refetch();
     } catch {
@@ -256,6 +263,8 @@ export default function DecisionDetail() {
       icon: 'refresh',
       run: () => void act(() => client()!.reask(decisionId)),
     });
+  // The design doc's attention table: failed → Retry, Force refresh;
+  // Withdraw belongs to stale and expired, not to failed.
   if (d.status === 'failed') {
     repair.push({
       label: 'Retry',
@@ -268,7 +277,7 @@ export default function DecisionDetail() {
       run: () => void act(() => client()!.refresh(decisionId)),
     });
   }
-  if (d.status === 'stale' || d.status === 'failed' || d.status === 'expired')
+  if (d.status === 'stale' || d.status === 'expired')
     repair.push({
       label: 'Withdraw',
       icon: 'close',

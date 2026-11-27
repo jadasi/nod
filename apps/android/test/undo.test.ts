@@ -100,6 +100,19 @@ describe('live decision helpers', () => {
     ).toBeNull();
   });
 
+  it('caps the persisted label at the glance question budget, on a word boundary', () => {
+    // "Other" answers are uncapped free text from the server contract; the
+    // record's label is display text, so it must not drag the encrypted
+    // pending-answers blob past the SecureStore 2048-byte value limit.
+    const words = Array.from({ length: 40 }, (_, i) => `word${i}`).join(' ');
+    const d = mkDecision({ answer: mkAnswer({ option_id: null, other_text: words }) });
+    const rec = pendingRecordFromDecision(d)!;
+    expect(rec.label.length).toBeLessThanOrEqual(120);
+    expect(rec.label.endsWith('…')).toBe(true);
+    // The cut lands on a word boundary: no half word survives the ellipsis.
+    expect(/^(word\d+)( word\d+)*$/.test(rec.label.slice(0, -1))).toBe(true);
+  });
+
   it('stillUndoable needs the server to agree and the clock to allow it', () => {
     const d = mkDecision({ answer: mkAnswer() });
     expect(stillUndoable(d, T0 + 30_000)).toBe(true);

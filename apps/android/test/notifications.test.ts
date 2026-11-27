@@ -3,6 +3,7 @@ import {
   BUDGET,
   CHANNELS,
   fitBudget,
+  mergeNotificationFeed,
   planForDecision,
   planForUpdate,
 } from '@/lib/notifications.js';
@@ -99,8 +100,11 @@ describe('planForDecision', () => {
     const plan = planForDecision(d, { now, glassesMirror: false })!;
     expect(plan.channelId).toBe('sending');
     expect(plan.actions.map((a) => a.id)).toEqual(['undo']);
-    expect(plan.progress).toBeCloseTo(0.5);
     expect(plan.body).toContain('“Merge”');
+    // The draining meter the design doc promises needs a progress bar the
+    // OS notification API here does not expose; the field was dropped
+    // rather than shipped dead (follow-up task, Notifee or a plugin).
+    expect('progress' in plan).toBe(false);
   });
 
   it('reports stale and failed answers on the problems channel in open hours only', () => {
@@ -119,5 +123,38 @@ describe('planForUpdate', () => {
     expect(
       planForUpdate(mkUpdate({ kind: 'progress' }), { now: OPEN, glassesMirror: false }),
     ).toBeNull();
+  });
+});
+
+describe('mergeNotificationFeed', () => {
+  it('feeds the loop the union of the inbox and the repair view', () => {
+    const inbox = mkDecision();
+    // A failed answer is the only state that posts on the problems channel,
+    // and it lives in the repair view, not the inbox view.
+    const failed = mkDecision({
+      id: 'dec-2',
+      status: 'failed',
+      answer: mkAnswer({ status: 'failed' }),
+    });
+    const feed = mergeNotificationFeed([inbox], [failed]);
+    expect(feed.map((d) => d.id)).toEqual(['dec-1', 'dec-2']);
+    // The problems plan for that decision is reachable through the merged
+    // feed: an inbox-only feed would have planned only the first one.
+    expect(
+      feed.map((d) => planForDecision(d, { now: OPEN, glassesMirror: false })?.channelId),
+    ).toEqual(['decisions', 'problems']);
+  });
+
+  it('keeps the inbox copy when a decision is in both views', () => {
+    const inbox = mkDecision();
+    const feed = mergeNotificationFeed([inbox], [{ ...inbox, status: 'stale' }]);
+    expect(feed.map((d) => d.id)).toEqual(['dec-1']);
+    expect(feed.map((d) => d.status)).toEqual(['open']);
+  });
+
+  it('handles empty views', () => {
+    expect(mergeNotificationFeed([], [])).toEqual([]);
+    const only = mkDecision({ id: 'dec-9', status: 'expired' });
+    expect(mergeNotificationFeed([], [only]).map((d) => d.id)).toEqual(['dec-9']);
   });
 });

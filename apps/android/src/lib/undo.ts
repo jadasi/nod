@@ -9,6 +9,7 @@
  * core, so the undo bar reappears exactly where it left off.
  */
 import type { DecisionView } from '@/api/types.js';
+import { BUDGET, fitBudget } from './format.js';
 
 export interface PendingAnswerRecord {
   decisionId: string;
@@ -108,6 +109,11 @@ export function pendingRecordFromDecision(d: DecisionView): PendingAnswerRecord 
     decisionId: d.id,
     deliverAfter: d.answer.deliver_after,
     answeredAt: d.answer.answered_at,
-    label: answerLabel(d, d.answer),
+    // The label is display text for the restored UI, so it fits the glance
+    // question budget. An "Other" answer is uncapped free text from the
+    // server contract, and every record rides in one encrypted blob that
+    // must stay under expo-secure-store's 2048-byte Android value limit —
+    // an overflowing setItemAsync would drop the undo bar after a relaunch.
+    label: fitBudget(answerLabel(d, d.answer), BUDGET.question),
   };
 }

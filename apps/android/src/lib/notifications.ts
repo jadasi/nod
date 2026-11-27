@@ -16,9 +16,12 @@
  *   the lenses — with title <= 48 and question <= 120 characters.
  */
 import type { DecisionView, UpdateRow } from '@/api/types.js';
-import { answerBanner } from './format.js';
+import { answerBanner, BUDGET, fitBudget } from './format.js';
 import { isOpenNow } from './hours.js';
-import { meterFraction } from './undo.js';
+
+// The glance budget and the fit function live in format.ts so the undo
+// record (lib/undo.ts) can share them without a cycle.
+export { BUDGET, fitBudget } from './format.js';
 
 export type ChannelId = 'urgent' | 'decisions' | 'sending' | 'updates' | 'problems';
 
@@ -91,10 +94,31 @@ export interface NotificationPlan {
   title: string;
   body: string;
   actions: NotificationAction[];
-  /** 0..1 draining meter, for the undo-window notification. */
-  progress?: number;
   /** Carried in the notification payload for deep links and actions. */
   data: Record<string, unknown>;
+}
+
+/**
+ * The decisions the post loop should plan over: the union of the inbox
+ * view and the repair view, one entry per decision. Core moves a decision
+ * out of the inbox view and into the repair view exactly when its answer
+ * turns stale or failed — the only states that produce problems-channel
+ * plans — so a loop that feeds only the inbox view can never reach the
+ * Delivery problems channel. The inbox copy wins when a decision appears
+ * in both views.
+ */
+export function mergeNotificationFeed(
+  inbox: readonly DecisionView[],
+  repair: readonly DecisionView[],
+): DecisionView[] {
+  const seen = new Set<string>();
+  const feed: DecisionView[] = [];
+  for (const d of [...inbox, ...repair]) {
+    if (seen.has(d.id)) continue;
+    seen.add(d.id);
+    feed.push(d);
+  }
+  return feed;
 }
 
 export interface NotifyContext {
@@ -102,27 +126,6 @@ export interface NotifyContext {
   /** RayNeo glasses mirror: new decisions post a high-priority notification
    *  that the official RayNeo AI app shows on the lenses. */
   glassesMirror: boolean;
-}
-
-/** The glance budget for the lenses: title 48, question 120. */
-export const BUDGET = { title: 48, question: 120 } as const;
-
-/**
- * Fits text to a character budget, cutting with an ellipsis.
- *
- * The cut lands on a word boundary when one is close enough to the end.
- * This text is read at a glance — on the lenses and on a heads-up
- * notification — and a word broken in half costs a re-read, which is the
- * one thing a glance cannot afford. A boundary further back than 70% of
- * the budget would throw away more than it saves, so that falls back to a
- * hard cut. Trailing punctuation goes with the cut word.
- */
-export function fitBudget(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const hard = text.slice(0, max - 1);
-  const lastSpace = hard.lastIndexOf(' ');
-  const body = lastSpace >= Math.floor((max - 1) * 0.7) ? hard.slice(0, lastSpace) : hard;
-  return `${body.replace(/[\s,;:.–—-]+$/, '')}…`;
 }
 
 /** Options for a decision, recommended first (for the top-2 actions). */
@@ -154,7 +157,10 @@ export function planForDecision(d: DecisionView, ctx: NotifyContext): Notificati
         title: fitBudget(d.glance.title, BUDGET.title),
         body: `Sending “${label}” in ${banner.text.replace('Sending in ', '')}`,
         actions: [{ id: 'undo', title: 'Undo' }],
-        progress: meterFraction(d.answer.answered_at, d.answer.deliver_after, ctx.now),
+        // The draining meter the design doc promises for this notification
+        // needs a progress bar the OS notification API here does not expose;
+        // filed as a follow-up (Notifee or a config plugin) rather than
+        // shipping a field the poster drops.
         data: { decisionId: d.id, kind: 'sending' },
       };
     }

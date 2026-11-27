@@ -1,11 +1,11 @@
 /**
  * Root layout: boots the encrypted session, keeps the native splash up until
- * then, and provides the query client. All UI below this file is
- * PROVISIONAL (functional placeholder, owned by Designer — BYT-753).
+ * then, and provides the query client. UI below this file is the production
+ * design pass (BYT-755), on top of the functional build (BYT-753).
  */
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useAppStore, queryClient, useEventFeed, useForegroundRefetch } from '@/state.js';
@@ -37,6 +37,14 @@ export default function RootLayout() {
       .boot()
       .then(() => SplashScreen.hideAsync());
   }, []);
+
+  // app/index.tsx's <Redirect> runs once at mount, so it cannot carry a
+  // sign-out: clearing the session mid-app would leave a blank screen with
+  // no path back to pairing. This one watches the live session instead —
+  // the spec's sign-out scenario is "the app returns to sign-in".
+  useEffect(() => {
+    if (booted && !session) router.replace('/sign-in');
+  }, [booted, session]);
 
   useEffect(() => {
     if (!session) return;
