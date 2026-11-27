@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Nod",
+    "slug": "nod-android",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "nod",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["android"],
+    "android": {
+      "package": "com.jadasi.nod",
+      "permissions": ["POST_NOTIFICATIONS", "VIBRATE"],
+      "adaptiveIcon": {
+        "backgroundColor": "#121314",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#121314",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 96
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#5dff8a"
+        }
+      ],
+      "expo-secure-store",
+      "expo-updates"
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "checkOnLaunch": "immediate",
+      "fallbackToCacheTimeoutMs": 3000
+    }
+  }
+}
